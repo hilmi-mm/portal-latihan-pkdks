@@ -61,7 +61,7 @@
           <button id="tabSumberHRMIS" type="button" class="btn btn-sm" aria-pressed="false" onclick="pilihSumberDashboard('hrmis')">HRMIS</button>
           <button id="tabSumberBanding" type="button" class="btn btn-sm" aria-pressed="false" onclick="pilihSumberDashboard('banding')">Banding</button>
         </div>
-        <div id="dashboardSkopSumber" class="alert alert-warning small mt-3 mb-0" role="status" style="display:none"></div>
+        <p id="dashboardSkopSumber" class="small text-secondary mt-3 mb-0" role="status" aria-live="polite" style="display:none"></p>
       </div>
       <div class="col-12">
         <div class="card p-4 shadow-sm dashboard-graf-card" style="border-radius:15px;">
@@ -555,7 +555,7 @@
           <div class="row g-3">
             <div class="col-md-3"><label class="form-label" for="adminHRMISYear">Tahun</label><input id="adminHRMISYear" class="form-control" type="number" min="2000" max="2099" value="2026" onchange="batalPratontonHRMIS()"></div>
             <div class="col-md-4"><label class="form-label" for="adminHRMISDate">Tarikh laporan</label><input id="adminHRMISDate" class="form-control" type="date" onchange="batalPratontonHRMIS()"><div class="form-text">Boleh dikosongkan jika tarikh ada dalam laporan.</div></div>
-            <div class="col-md-12"><label class="form-label" for="adminHRMISFiles">Upload XLSX</label><input id="adminHRMISFiles" class="form-control" type="file" accept=".xlsx" multiple onchange="batalPratontonHRMIS()"><div class="form-text">Pilih laporan keseluruhan sahaja jika sudah merangkumi semua staf. Jika pilih dua laporan bertindih, IC yang sama dikira sekali.</div></div>
+            <div class="col-md-12"><label class="form-label" for="adminHRMISFiles">Upload XLSX</label><input id="adminHRMISFiles" class="form-control" type="file" accept=".xlsx" multiple onchange="batalPratontonHRMIS()"><div class="form-text">Import menggantikan seluruh laporan HRMIS untuk tahun dipilih. Pilih laporan keseluruhan, atau laporan cukup dan kurang 40 jam bersama-sama dalam import yang sama. IC bertindih dikira sekali.</div></div>
             <div class="col-md-12"><label class="form-label" for="adminHRMISLinks">Atau pautan Google Sheet</label><textarea id="adminHRMISLinks" rows="2" class="form-control" placeholder="Satu pautan Google Sheet setiap baris" oninput="batalPratontonHRMIS()"></textarea><div class="form-text">Akaun yang deploy portal mesti mempunyai akses membaca Sheet itu.</div></div>
           </div>
           <button id="btnPreviewHRMIS" type="button" class="btn btn-primary mt-3" onclick="semakImportHRMIS()">1. Semak import</button>
@@ -564,8 +564,8 @@
             <div id="adminHRMISIssues" class="alert alert-warning" style="display:none"></div>
             <div class="d-flex gap-2 mb-2"><input id="adminHRMISSearch" class="form-control form-control-sm" placeholder="Cari nama / IC / unit" oninput="renderPratontonHRMIS(0)"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="renderPratontonHRMIS(adminHRMISPage-1)">←</button><span id="adminHRMISPageInfo" class="text-nowrap small align-self-center"></span><button type="button" class="btn btn-sm btn-outline-secondary" onclick="renderPratontonHRMIS(adminHRMISPage+1)">→</button></div>
             <div class="table-responsive"><table class="table table-sm table-bordered align-middle"><thead><tr><th>IC</th><th>Nama</th><th>Unit/Jawatan</th><th>Jam lama</th><th>Jam laporan</th><th>Padanan</th><th>Tindakan</th></tr></thead><tbody id="adminHRMISRows"></tbody></table></div>
-            <p class="small text-muted">Jam terkumpul menggantikan nilai lama untuk IC dan tahun yang sama. Rekod yang tiada dalam fail tidak ditukar menjadi 0 jam. Staf yang belum mempunyai rekod portal tetap disimpan dalam HRMIS_JAM.</p>
-            <div class="form-check mb-3"><input id="adminHRMISConfirmCheck" type="checkbox" class="form-check-input" onchange="semakButangConfirmHRMIS()"><label for="adminHRMISConfirmCheck" class="form-check-label">Saya telah menyemak tahun, tarikh dan pratonton ini untuk dikemas kini.</label></div>
+            <p class="small text-muted">Selepas disahkan, hanya staf dalam import ini kekal sebagai laporan HRMIS tahun dipilih. Rekod lama tahun itu yang tiada dalam import akan dikeluarkan, bukan ditukar menjadi 0 jam. Data HRMIS tahun lain dan rekod latihan portal dikekalkan.</p>
+            <div class="form-check mb-3"><input id="adminHRMISConfirmCheck" type="checkbox" class="form-check-input" onchange="semakButangConfirmHRMIS()"><label id="adminHRMISReplaceConsent" for="adminHRMISConfirmCheck" class="form-check-label">Saya telah menyemak pratonton dan bersetuju menggantikan seluruh laporan HRMIS tahun dipilih.</label></div>
             <button id="btnConfirmHRMIS" type="button" class="btn btn-success" onclick="sahkanImportHRMIS()" disabled>2. Sahkan & kemas kini HRMIS_JAM</button>
           </section>
         </div>
@@ -1759,8 +1759,7 @@ function renderStaffList() {
       const s=String(value||'');return /^\d{4}-\d{2}-\d{2}$/.test(s)?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):s;
     }
     function infoLaporanGrafHRMIS(res,jawatan) {
-      const dates=res.bilTarikh>1?tarikhGrafHRMIS(res.tarikhAwal)+' – '+tarikhGrafHRMIS(res.tarikhAkhir):tarikhGrafHRMIS(res.tarikhAkhir);
-      return 'Jumlah laporan: '+res.jumlahStaf+' staf • IC unik • Laporan '+dates+(jawatan?' • Jawatan dan pembahagi mengikut laporan HRMIS.':' • 0 Jam hanya staf yang dilaporkan 0 jam; staf tanpa laporan tidak dimasukkan.');
+      return 'Jumlah laporan: '+res.jumlahStaf+' staf • IC unik'+(jawatan?' • Jawatan dan pembahagi mengikut laporan HRMIS.':' • 0 Jam hanya staf yang dilaporkan 0 jam; staf tanpa laporan tidak dimasukkan.');
     }
     function renderDashboardSumber() {
       if(!dashboardSumberData)return;kemasPaparanTabSumber();
@@ -1783,11 +1782,9 @@ function renderStaffList() {
       if(sumberDashboardAktif==='banding')['jawatan','kategori'].forEach(function(part){renderSection(res.hrmis&&res.hrmis[part],part,true);});
       const note=document.getElementById('dashboardSkopSumber'),p=res.kategori,h=res.hrmis&&res.hrmis.kategori;
       note.style.display='none';
-      if(sumberDashboardAktif!=='portal'&&h&&h.status==='SUCCESS') {
-        const mismatch=p&&p.status==='SUCCESS'&&p.jumlahStaf!==h.jumlahStaf;
-        if(mismatch||sumberDashboardAktif==='banding'){
-          note.style.display='block';note.textContent=(mismatch?'Skop staf berbeza: Portal '+p.jumlahStaf+' staf; HRMIS '+h.jumlahStaf+' staf. ':'')+'Peratus menggunakan jumlah staf sumber masing-masing. Jawatan HRMIS mengikut label laporan; semak skop dan padanan jawatan sebelum membandingkan.';
-        }
+      if(h&&h.status==='SUCCESS') {
+        const dates=h.bilTarikh>1?tarikhGrafHRMIS(h.tarikhAwal)+' – '+tarikhGrafHRMIS(h.tarikhAkhir):tarikhGrafHRMIS(h.tarikhAkhir);
+        note.style.display='block';note.textContent='Portal: '+(p&&p.status==='SUCCESS'?p.jumlahStaf+' staf':'Belum tersedia')+' · HRMIS: '+h.jumlahStaf+' staf · Tarikh laporan HRMIS: '+dates+'. Peratus mengikut jumlah staf sumber masing-masing.';
       }
     }
     function renderDashboardLandingChart(chartData,tambahanHRMIS) {
@@ -1947,15 +1944,18 @@ function renderStaffList() {
       if(adminHRMISBusy||!adminHRMISToken)return;batalPratontonHRMIS();adminHRMISBusy=true;document.getElementById('btnPreviewHRMIS').disabled=true;mesejAdminHRMIS('Membaca laporan dan menyediakan pratonton...');
       function done(){adminHRMISBusy=false;document.getElementById('btnPreviewHRMIS').disabled=false;}
       try{
-        const payload={year:Number(document.getElementById('adminHRMISYear').value),reportDate:document.getElementById('adminHRMISDate').value,books:await bacaFailAdminHRMIS(Array.from(document.getElementById('adminHRMISFiles').files)),links:document.getElementById('adminHRMISLinks').value.split(/\n/).map(s=>s.trim()).filter(Boolean)};
+        const payload={importMode:'replace-year-v1',year:Number(document.getElementById('adminHRMISYear').value),reportDate:document.getElementById('adminHRMISDate').value,books:await bacaFailAdminHRMIS(Array.from(document.getElementById('adminHRMISFiles').files)),links:document.getElementById('adminHRMISLinks').value.split(/\n/).map(s=>s.trim()).filter(Boolean)};
         const submitted=JSON.stringify({year:payload.year,date:payload.reportDate,links:payload.links,files:Array.from(document.getElementById('adminHRMISFiles').files).map(f=>f.name+'|'+f.size+'|'+f.lastModified)});
         panggilAdminHRMIS('adminHRMISPreview',[adminHRMISToken,JSON.stringify(payload)],function(res){
           done();if(!res||!res.success){mesejAdminHRMIS(res?res.message:'Pratonton gagal.',true);return;}
+          if(res.importMode!=='replace-year-v1'){mesejAdminHRMIS('Code.gs masih versi lama. Ganti kedua-dua fail dan deploy New version sebelum import gantian tahun.',true);return;}
           const current=JSON.stringify({year:Number(document.getElementById('adminHRMISYear').value),date:document.getElementById('adminHRMISDate').value,links:document.getElementById('adminHRMISLinks').value.split(/\n/).map(s=>s.trim()).filter(Boolean),files:Array.from(document.getElementById('adminHRMISFiles').files).map(f=>f.name+'|'+f.size+'|'+f.lastModified)});
           if(current!==submitted){mesejAdminHRMIS('Input berubah semasa semakan. Klik Semak import semula.',true);return;}
           adminHRMISPreviewId=res.canConfirm?res.previewId:'';adminHRMISRecords=res.records;document.getElementById('adminHRMISYear').value=res.year;document.getElementById('adminHRMISDate').value=res.reportDate;
           document.getElementById('adminHRMISPreview').style.display='block';
-          const c=res.counts;document.getElementById('adminHRMISSummary').textContent=res.count+' IC unik • '+res.duplicates+' pertindihan dibuang • '+c.baru+' baharu / '+c.kemasKini+' dikemas kini / '+c.sama+' sama • '+c.padan+' padan portal / '+c.tiadaPortal+' belum ada rekod portal. Kategori: '+res.buckets.join(' / ')+' (0, <20, <40, ≥40 jam).';
+          const c=res.counts;document.getElementById('adminHRMISSummary').textContent='Ganti keseluruhan tahun '+res.year+': '+c.lama+' staf lama → '+res.count+' staf dalam laporan baharu. '+c.dikeluarkan+' rekod lama tiada dalam import akan dikeluarkan. '+res.duplicates+' pertindihan dibuang • '+c.baru+' baharu / '+c.kemasKini+' dikemas kini / '+c.sama+' sama • '+c.padan+' padan portal / '+c.tiadaPortal+' belum ada rekod portal. Kategori: '+res.buckets.join(' / ')+' (0, <20, <40, ≥40 jam).';
+          if(res.notices&&res.notices.length)document.getElementById('adminHRMISSummary').textContent+=' '+res.notices.join(' ');
+          document.getElementById('adminHRMISReplaceConsent').textContent='Saya bersetuju menggantikan seluruh laporan HRMIS tahun '+res.year+' dengan '+res.count+' staf ini dan mengeluarkan '+c.dikeluarkan+' rekod lama yang tiada dalam import. Data tahun lain dikekalkan.';
           const issues=document.getElementById('adminHRMISIssues');issues.style.display=res.issues.length?'block':'none';issues.textContent=res.issues.join('\n');issues.style.whiteSpace='pre-line';
           document.getElementById('adminHRMISSearch').value='';renderPratontonHRMIS(0);semakButangConfirmHRMIS();mesejAdminHRMIS(res.canConfirm?'Pratonton sedia. Semak dan tandakan pengesahan sebelum menyimpan.':'Ada isu dalam laporan. Tiada data disimpan; betulkan isu sebelum meneruskan.',!res.canConfirm);
         },function(m){done();mesejAdminHRMIS(m,true);});
@@ -2005,4 +2005,5 @@ function renderStaffList() {
   </script>
 </body>
 </html>
+
 

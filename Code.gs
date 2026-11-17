@@ -1257,7 +1257,7 @@ function grafDashboardHRMIS_(year) {
       return {jawatan:empty,kategori:empty};
     }
     var list=Object.keys(dates).sort(),warnings=[],counts=[0,0,0,0],belowOne=0;
-    if(list.length>1)warnings.push('Data digabung daripada laporan bertarikh berbeza. Tarikh paling awal '+list[0]+'; paling baharu '+list[list.length-1]+'.');
+    // Julat tarikh lama, jika ada, ditunjukkan sekali dalam nota dashboard.
     records.forEach(function(minutes){
       if(minutes===0)counts[0]++;
       else if(minutes<60)belowOne++;
@@ -1272,7 +1272,7 @@ function grafDashboardHRMIS_(year) {
     var chart=Object.keys(groups).sort().map(function(key){
       var g=groups[key];g.peratus=Math.round(g.capai40/g.jumlahJawatan*1000)/10;return g;
     });
-    var jobs=Object.assign({},meta,{status:'SUCCESS',warnings:warnings,chartData:chart});
+    var jobs=Object.assign({},meta,{status:'SUCCESS',warnings:[],chartData:chart});
     return {jawatan:jobs,kategori:category};
   } catch(e) {
     var error={status:'ERROR',message:e.message};return {jawatan:error,kategori:error};
@@ -1411,15 +1411,26 @@ function adminHRMISPreview(token,payloadJson){
     var owner=semakAdminHRMIS_(token);
     if(typeof payloadJson!=='string'||payloadJson.length>3000000)throw new Error('Saiz input laporan melebihi had.');
     var input=JSON.parse(payloadJson),year=Number(input.year);
+    if(input.importMode!=='replace-year-v1')throw new Error('Kemas kini kedua-dua Code.gs dan Index.html, kemudian buka semula portal untuk import gantian tahun.');
     var books=input.books||[];if(!Array.isArray(books)||books.length>30)throw new Error('Terlalu banyak tab/fail.');
     books=books.concat(booksPautanHRMIS_(input.links||[]));if(!books.length)throw new Error('Pilih fail XLSX atau masukkan pautan Google Sheet.');
     var detected={};books.forEach(function(book){if(book&&Array.isArray(book.rows))book.rows.slice(0,100).forEach(function(row){if(!Array.isArray(row))return;var m=row.map(teksHRMIS_).join(' ').match(/HINGGA\s+(\d{2}\/\d{2}\/\d{4})/i);if(m)detected[isoTarikhHRMIS_(m[1])]=true;});});
     var dates=Object.keys(detected),date=isoTarikhHRMIS_(input.reportDate || (dates.length===1?dates[0]:''));
     if(!Number.isInteger(year)||year<2000||year>2099||Number(date.slice(0,4))!==year)throw new Error('Tahun dan tarikh laporan mesti sepadan.');
-    var parsed=parseLaporanHRMIS_(books,year,date),table=bacaJadualHRMIS_(),staff=indeksStafHRMIS_(),counts={baru:0,kemasKini:0,sama:0,padan:0,tiadaPortal:0},buckets=[0,0,0,0];
+    var parsed=parseLaporanHRMIS_(books,year,date),table=bacaJadualHRMIS_(),staff=indeksStafHRMIS_(),counts={baru:0,kemasKini:0,sama:0,padan:0,tiadaPortal:0,dikeluarkan:0,lama:0},buckets=[0,0,0,0],incoming=Object.create(null),oldDates={};
+    parsed.records.forEach(function(r){incoming[r.ic]=true;});
+    var removed=[];
+    Object.keys(table.map).forEach(function(key){
+      var old=table.map[key].values;if(Number(old[0])!==year)return;
+      counts.lama++;
+      try{oldDates[isoTarikhHRMIS_(old[9])]=true;}catch(e){}
+      var ic=icPortal_(old[1]);if(incoming[ic])return;
+      counts.dikeluarkan++;
+      removed.push({ic:ic,name:teksHRMIS_(old[2]),job:teksHRMIS_(old[3]),unit:teksHRMIS_(old[4]),minutes:null,oldMinutes:Number(old[5]),oldDate:String(old[9]),matched:!!staff[ic],portalName:staff[ic]||'',change:'Dikeluarkan'});
+    });
     var preview=parsed.records.map(function(r){
       var old=table.map[year+'|'+r.ic],oldDate=old?isoTarikhHRMIS_(old.values[9]):null;
-      if(oldDate && oldDate>date)parsed.issues.push('IC '+r.ic+': laporan '+date+' lebih lama daripada rekod '+oldDate+'.');
+      // Import gantian mengikut pilihan admin, termasuk pembetulan tarikh laporan lama.
       var change=!old?'Baru':Number(old.values[5])===r.minutes&&oldDate===date?'Sama':'Kemas kini';
       if(!old)counts.baru++;else if(change==='Sama')counts.sama++;else counts.kemasKini++;
       if(staff[r.ic])counts.padan++;else counts.tiadaPortal++;
@@ -1427,9 +1438,11 @@ function adminHRMISPreview(token,payloadJson){
       return {ic:r.ic,name:r.name,job:r.job,unit:r.unit,minutes:r.minutes,oldMinutes:old?Number(old.values[5]):null,oldDate:oldDate,matched:!!staff[r.ic],portalName:staff[r.ic]||'',change:change};
     });
     if(!parsed.records.length)parsed.issues.push('Tiada staf untuk diimport.');
-    var issues=Array.from(new Set(parsed.issues)),plan={year:year,date:date,records:parsed.records,tableHash:table.hash,counts:counts,buckets:buckets,duplicates:parsed.duplicates};
+    var issues=Array.from(new Set(parsed.issues)),plan={importMode:'replace-year-v1',year:year,date:date,records:parsed.records,tableHash:table.hash,counts:counts,buckets:buckets,duplicates:parsed.duplicates};
     var id=issues.length?'':simpanPreviewHRMIS_(owner,plan);
-    return {success:true,canConfirm:!issues.length,previewId:id,year:year,reportDate:date,count:preview.length,duplicates:parsed.duplicates,inputRows:parsed.inputRows,counts:counts,buckets:buckets,issues:issues,records:preview};
+    var previousDates=Object.keys(oldDates).sort(),notices=[];
+    if(previousDates.length&&previousDates[previousDates.length-1]>date)notices.push('Tarikh laporan dipilih '+date+' lebih awal daripada tarikh lama '+previousDates[previousDates.length-1]+'. Pengesahan tetap akan menggantikan seluruh data HRMIS tahun '+year+'.');
+    return {success:true,importMode:'replace-year-v1',canConfirm:!issues.length,previewId:id,year:year,reportDate:date,count:preview.length,duplicates:parsed.duplicates,inputRows:parsed.inputRows,counts:counts,buckets:buckets,issues:issues,notices:notices,records:preview.concat(removed)};
   }catch(e){return {success:false,message:e.message};}
 }
 function teksSelHRMIS_(s){s=teksHRMIS_(s).slice(0,2000);return /^[=+\-@]/.test(s)?"'"+s:s;}
@@ -1440,18 +1453,29 @@ function adminHRMISConfirm(token,id){
     var key=hrmisKey_('preview:'+id),raw=cache.get(key);if(!raw)throw new Error('Pratonton tamat. Klik Semak import semula.');
     var meta=JSON.parse(raw);if(meta.owner!==owner)throw new Error('Pratonton bukan milik sesi admin ini.');if(meta.done)return meta.result;
     var parts=[];for(var i=0;i<meta.chunks;i++){var part=cache.get(key+':'+i);if(part==null)throw new Error('Pratonton tamat. Klik Semak import semula.');parts.push(part);}
-    var plan=JSON.parse(parts.join('')),table=bacaJadualHRMIS_();if(table.hash!==plan.tableHash)throw new Error('HRMIS_JAM berubah selepas pratonton. Semak import semula sebelum mengesahkan.');
-    var rows=table.rows.map(function(r){return r.slice();}),now=new Date().toISOString();
+    var plan=JSON.parse(parts.join(''));
+    if(plan.importMode!=='replace-year-v1')throw new Error('Pratonton versi lama tidak boleh digunakan. Klik Semak import semula.');
+    if(!Array.isArray(plan.records)||!plan.records.length)throw new Error('Tiada staf untuk menggantikan laporan. Tiada data dipadam.');
+    var table=bacaJadualHRMIS_();if(table.hash!==plan.tableHash)throw new Error('HRMIS_JAM berubah selepas pratonton. Semak import semula sebelum mengesahkan.');
+    // Bentuk pengganti dalam memori dahulu. Tahun lain kekal; tiada clear/delete sebelum setValues.
+    var rows=[HRMIS_HEADERS_.slice()],now=new Date().toISOString();
+    table.rows.slice(1).forEach(function(r){
+      if(r.every(function(v){return v===''||v==null;})||Number(r[0])===plan.year)return;
+      rows.push(r.map(function(v){return typeof v==='string'&&/^[=+\-@]/.test(v)?"'"+v:v;}));
+    });
     plan.records.forEach(function(r){
       var row=[plan.year,r.ic,teksSelHRMIS_(r.name),teksSelHRMIS_(r.job),teksSelHRMIS_(r.unit),r.minutes,r.parts[0]==null?'':r.parts[0],r.parts[1]==null?'':r.parts[1],r.parts[2]==null?'':r.parts[2],plan.date,teksSelHRMIS_(r.source),now];
-      var old=table.map[plan.year+'|'+r.ic];if(old)rows[old.row]=row;else rows.push(row);
+      rows.push(row);
     });
+    // Padankan tinggi lama supaya baki baris tahun dipilih turut ditulis kosong dalam satu operasi.
+    var height=Math.max(table.rows.length,rows.length);
+    while(rows.length<height)rows.push(HRMIS_HEADERS_.map(function(){return '';}));
     var ss=SpreadsheetApp.getActiveSpreadsheet(),sh=table.sheet||ss.insertSheet('HRMIS_JAM');
     if(sh.getMaxColumns()<HRMIS_HEADERS_.length)sh.insertColumnsAfter(sh.getMaxColumns(),HRMIS_HEADERS_.length-sh.getMaxColumns());
     if(sh.getMaxRows()<rows.length)sh.insertRowsAfter(sh.getMaxRows(),rows.length-sh.getMaxRows());
     sh.getRange(2,2,Math.max(1,rows.length-1),1).setNumberFormat('@');sh.getRange(2,10,Math.max(1,rows.length-1),1).setNumberFormat('@');
     sh.getRange(1,1,rows.length,HRMIS_HEADERS_.length).setValues(rows);sh.setFrozenRows(1);SpreadsheetApp.flush();
-    var result={success:true,count:plan.records.length,year:plan.year,reportDate:plan.date,message:plan.records.length+' staf disimpan dalam HRMIS_JAM. Jam diganti mengikut IC/tahun, bukan ditambah.'};
+    var result={success:true,count:plan.records.length,year:plan.year,reportDate:plan.date,removedCount:plan.counts.dikeluarkan,previousCount:plan.counts.lama,message:'Laporan HRMIS tahun '+plan.year+' diganti sepenuhnya: '+plan.records.length+' staf. '+plan.counts.dikeluarkan+' rekod lama yang tiada dalam laporan baharu dikeluarkan. Data tahun lain dikekalkan.'};
     cache.put(key,JSON.stringify({owner:owner,done:true,result:result}),600);return result;
   });}catch(e){return {success:false,message:e.message};}
 }
@@ -1464,4 +1488,5 @@ function sertakanJamHRMIS_(data){
     });
   });});
 }
+
 
