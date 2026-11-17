@@ -8,10 +8,11 @@ Kemas kini 17 November 2026 menambah pilihan sumber untuk kedua-dua graf. Jata, 
 
 - **Portal:** pengiraan sedia ada berdasarkan Tarikh Mula dan jumlah staf organisasi bagi tahun dipilih.
 - **HRMIS:** jumlah tahunan mengikut IC/tahun daripada tab `HRMIS_JAM` yang sudah diimport dan disahkan oleh admin. Pembahagi ialah bilangan staf dalam data HRMIS tahun itu, bukan tetapan 551. Tiada sambungan automatik ke sistem HRMIS.
-- **Banding:** kedua-dua sumber dipaparkan bersebelahan pada desktop dan bertingkat pada telefon. Satu nota kecil menyatakan bilangan staf dan tarikh HRMIS; peratus menggunakan pembahagi masing-masing.
+- **Banding:** kedua-dua sumber dipaparkan bersebelahan pada desktop dan bertingkat pada telefon. Peratus menggunakan pembahagi masing-masing; nota ringkas hanya menunjukkan tarikh upload laporan HRMIS.
 - Graf jawatan HRMIS menggunakan label jawatan dalam laporan dan bilangan staf setiap label sebagai pembahagi. Ia tidak memadankan skim/gred secara tekaan dengan kategori perjawatan portal.
 - 0 jam HRMIS hanya staf yang dilaporkan tepat 0 minit. Staf yang tiada dalam laporan tidak ditambah sebagai 0 jam. Jika ada jumlah positif kurang 1 jam, ia dipaparkan sebagai kategori tambahan supaya pecahan lengkap.
-- Nota kecil di atas dashboard menunjukkan jumlah staf Portal/HRMIS dan tarikh laporan. Rekod lama yang masih bercampur tarikh ditunjukkan sebagai julat tarikh sekali sahaja; amaran tarikh tidak diulang pada kedua-dua graf.
+- Carta pecahan jam (doughnut) diletakkan dahulu, diikuti bar graf pencapaian 40 jam mengikut jawatan. Semua perkataan “Memuatkan” pada Index.html ditukar kepada “Loading”.
+- Nota di atas dashboard hanya menunjukkan **Tarikh upload laporan HRMIS**. Tarikh ini daripada lajur `Dikemas Kini` yang ditulis ketika import disahkan, dipaparkan mengikut Asia/Kuala_Lumpur. Ia bukan tempoh laporan. Jika timestamp tiada/tidak sah, paparan ialah “Belum tersedia”.
 - Nama jawatan boleh membalut baris pada telefon. Legend doughnut di kanan.
 
 ## Import HRMIS menggantikan seluruh tahun dipilih
@@ -30,7 +31,7 @@ Kemas kini 17 November 2026 menambah pilihan sumber untuk kedua-dua graf. Jata, 
 2. **Save → Deploy → Manage deployments**.
 3. Pilih deployment yang **Web app URL** sepadan dengan URL lama yang digunakan staf.
 4. **Edit → Version: New version → Deploy**.
-5. Buka semula URL lama. **Admin → upload laporan keseluruhan terkini → Semak import → semak senarai dikeluarkan → tandakan pengesahan → Sahkan & kemas kini HRMIS_JAM**.
+5. Buka semula URL lama dan **Refresh**. Kemas kini paparan ini tidak memerlukan import semula. Jika masih perlu membersihkan data HRMIS lama yang bercampur, gunakan **Admin → upload laporan keseluruhan terkini → Semak import → semak senarai dikeluarkan → tandakan pengesahan → Sahkan & kemas kini HRMIS_JAM**.
 
 Tidak perlu mengulang persediaan tab tahunan atau menetapkan semula `HRMIS_ADMIN_PASSWORD`. **Untuk membersihkan data lama yang sudah bercampur, import semula laporan terkini selepas deploy. Memasang kod sahaja tidak mengubah data.** Tiada perubahan manifest/scopes diperlukan. Perubahan di GitHub tidak deploy Apps Script secara automatik.
 
@@ -38,7 +39,10 @@ Kod lama kekal dalam sejarah commit GitHub. Kod ini tidak menjalankan rollback a
 
 ## Semakan
 
-116 semakan simulasi semasa lulus: penggantian tahun penuh, pengosongan baki baris, tahun lain dikekalkan, deduplikasi dua fail, pembetulan tarikh, input kosong/tidak sah, hash database berubah, sesi admin, protokol lama, pengesahan berulang, kegagalan penulisan, satu nota dashboard dan checkbox persetujuan. Hero, ikon/wording menu serta modul simpan/sijil/status staf dibandingkan dengan versi sebelum perubahan ini.
+Semakan versi import terdahulu: 116 semakan simulasi lulus, meliputi penggantian tahun penuh, pengosongan baki baris, tahun lain dikekalkan, deduplikasi dua fail, pembetulan tarikh, input kosong/tidak sah, hash database berubah, sesi admin, protokol lama, pengesahan berulang, kegagalan penulisan, satu nota dashboard dan checkbox persetujuan. Hero, ikon/wording menu serta modul simpan/sijil/status staf dibandingkan dengan versi sebelum perubahan ini.
+
+Kemas kini paparan semasa lulus 19 semakan: sintaks, susunan graf, wording, timestamp upload mengikut tahun/zona masa, nota ketiga-tiga tab dan kod import yang dikekalkan.
 
 Tiada database atau deployment sebenar diubah oleh proses kemas kini kod ini. Ujian simulasi tidak menggantikan semakan selepas deploy dalam GAS.
+
 

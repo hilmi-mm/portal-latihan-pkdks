@@ -53,7 +53,7 @@
     <div id="menuView" class="section-view active-view row justify-content-center g-4">
       <div class="col-12 d-flex justify-content-end align-items-center gap-2">
         <label for="tahunLandingSelect" class="fw-bold">Tahun dashboard:</label>
-        <select id="tahunLandingSelect" class="form-select form-select-sm" style="max-width:140px" onchange="muatDashboardLanding()" aria-label="Tahun dashboard"><option value="">Memuatkan...</option></select>
+        <select id="tahunLandingSelect" class="form-select form-select-sm" style="max-width:140px" onchange="muatDashboardLanding()" aria-label="Tahun dashboard"><option value="">Loading...</option></select>
       </div>
       <div class="col-12">
         <div class="dashboard-sumber-tabs" role="group" aria-label="Sumber data dashboard">
@@ -65,6 +65,25 @@
       </div>
       <div class="col-12">
         <div class="card p-4 shadow-sm dashboard-graf-card" style="border-radius:15px;">
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2"><h5 id="tajukGrafKategori" class="text-primary mb-0">📊 Pecahan Jam Latihan Staf</h5><button type="button" class="btn btn-sm btn-outline-primary" onclick="muatGrafKategoriJam()">🔄 Refresh</button></div>
+          <div id="dashboardGrafKategoriGrid" class="dashboard-graf-grid">
+            <div class="dashboard-graf-panel">
+              <div id="dashboardKategoriSumber" class="dashboard-sumber-label">Portal</div>
+              <p id="kategoriJamInfo" class="small text-secondary" role="status">Loading jumlah staf...</p>
+              <div id="kategoriJamStatus" class="alert alert-info" role="status">Loading pecahan jam...</div>
+              <div id="kategoriJamWrap" class="kategori-jam-layout" style="display:none"><div class="kategori-jam-kanvas"><canvas id="chartKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan" role="img"></canvas></div><ul id="kategoriJamLegend" class="kategori-jam-legend"></ul></div>
+            </div>
+            <div id="dashboardHRMISKategoriPanel" class="dashboard-graf-panel" style="display:none">
+              <div class="dashboard-sumber-label">HRMIS</div>
+              <p id="kategoriHRMISJamInfo" class="small text-secondary" role="status"></p>
+              <div id="kategoriHRMISJamStatus" class="alert alert-info" role="status"></div>
+              <div id="kategoriHRMISJamWrap" class="kategori-jam-layout" style="display:none"><div class="kategori-jam-kanvas"><canvas id="chartHRMISKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan HRMIS" role="img"></canvas></div><ul id="kategoriHRMISJamLegend" class="kategori-jam-legend"></ul></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card p-4 shadow-sm dashboard-graf-card" style="border-radius:15px;">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 id="tajukGrafJawatan" class="text-primary mb-0">📈 Dashboard Prestasi Latihan Staf</h5>
             <button class="btn btn-sm btn-outline-primary" onclick="muatDashboardLanding()">🔄 Refresh</button>
@@ -73,7 +92,7 @@
             <div class="dashboard-graf-panel">
               <div id="dashboardJawatanSumber" class="dashboard-sumber-label">Portal</div>
               <p id="jawatanGrafInfo" class="small text-secondary"></p>
-              <div id="dashboardLandingLoading" class="alert alert-info" role="status">Memuatkan dashboard...</div>
+              <div id="dashboardLandingLoading" class="alert alert-info" role="status">Loading dashboard...</div>
               <div id="dashboardLandingChartWrap" style="display:none;"><div id="chartLandingCapai40"></div></div>
             </div>
             <div id="dashboardHRMISJawatanPanel" class="dashboard-graf-panel" style="display:none">
@@ -86,25 +105,6 @@
         </div>
       </div>
 
-      <div class="col-12">
-        <div class="card p-4 shadow-sm dashboard-graf-card" style="border-radius:15px;">
-          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2"><h5 id="tajukGrafKategori" class="text-primary mb-0">📊 Pecahan Jam Latihan Staf</h5><button type="button" class="btn btn-sm btn-outline-primary" onclick="muatGrafKategoriJam()">🔄 Refresh</button></div>
-          <div id="dashboardGrafKategoriGrid" class="dashboard-graf-grid">
-            <div class="dashboard-graf-panel">
-              <div id="dashboardKategoriSumber" class="dashboard-sumber-label">Portal</div>
-              <p id="kategoriJamInfo" class="small text-secondary" role="status">Memuatkan jumlah staf...</p>
-              <div id="kategoriJamStatus" class="alert alert-info" role="status">Memuatkan pecahan jam...</div>
-              <div id="kategoriJamWrap" class="kategori-jam-layout" style="display:none"><div class="kategori-jam-kanvas"><canvas id="chartKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan" role="img"></canvas></div><ul id="kategoriJamLegend" class="kategori-jam-legend"></ul></div>
-            </div>
-            <div id="dashboardHRMISKategoriPanel" class="dashboard-graf-panel" style="display:none">
-              <div class="dashboard-sumber-label">HRMIS</div>
-              <p id="kategoriHRMISJamInfo" class="small text-secondary" role="status"></p>
-              <div id="kategoriHRMISJamStatus" class="alert alert-info" role="status"></div>
-              <div id="kategoriHRMISJamWrap" class="kategori-jam-layout" style="display:none"><div class="kategori-jam-kanvas"><canvas id="chartHRMISKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan HRMIS" role="img"></canvas></div><ul id="kategoriHRMISJamLegend" class="kategori-jam-legend"></ul></div>
-            </div>
-          </div>
-        </div>
-      </div>
       <div class="col-md-4 mt-4">
         <div class="card menu-card h-100 text-center p-4" onclick="showView('kategoriView')">
           <h1 class="display-4 mb-3">📝</h1>
@@ -395,7 +395,7 @@
             <button class="btn btn-sm btn-success" onclick="exportExcelSemakan()">📥 Export Excel</button>
           </div>
         </div>
-        <div id="dashLoading" class="alert alert-info">Memuatkan data, sila tunggu...</div>
+        <div id="dashLoading" class="alert alert-info">Loading data, sila tunggu...</div>
         <div id="dashContent" style="display:none;">
           <div class="row mb-3 align-items-end bg-light p-3 rounded">
             <div class="col-md-3">
@@ -921,7 +921,7 @@
 
 function muatDataDashboard() {
   document.getElementById('dashLoading').style.display = 'block';
-  document.getElementById('dashLoading').innerText = 'Memuatkan senarai jawatan...';
+  document.getElementById('dashLoading').innerText = 'Loading senarai jawatan...';
   document.getElementById('dashContent').style.display = 'none';
   globalData = {};
 
@@ -975,7 +975,7 @@ function muatSemuaJawatanData() {
   var myLoadId = ++activeLoadId;
 
   document.getElementById('dashLoading').style.display = 'block';
-  document.getElementById('dashLoading').innerText = 'Memuatkan semua rekod (mungkin ambil masa lebih lama)...';
+  document.getElementById('dashLoading').innerText = 'Loading semua rekod (mungkin ambil masa lebih lama)...';
   document.getElementById('dashContent').style.display = 'none';
 
   google.script.run
@@ -1010,7 +1010,7 @@ function muatDataUntukJawatan(jawatan) {
   var myLoadId = ++activeLoadId;
 
   document.getElementById('dashLoading').style.display = 'block';
-  document.getElementById('dashLoading').innerText = 'Memuatkan data ' + jawatan + '...';
+  document.getElementById('dashLoading').innerText = 'Loading data ' + jawatan + '...';
   document.getElementById('dashContent').style.display = 'none';
 
   google.script.run
@@ -1157,7 +1157,7 @@ function muatDataUntukJawatan(jawatan) {
         document.getElementById('dashContent').style.display = 'none';
         google.script.run.withSuccessHandler(res => {
           alert(res.message);
-          document.getElementById('dashLoading').innerText = "Memuatkan data, sila tunggu...";
+          document.getElementById('dashLoading').innerText = "Loading data, sila tunggu...";
           if(res.success) muatDataDashboard(); 
           else {
              document.getElementById('dashLoading').style.display = 'none';
@@ -1746,7 +1746,7 @@ function renderStaffList() {
       document.getElementById('dashboardSkopSumber').style.display='none';
       [false,true].forEach(function(extra){['jawatan','kategori'].forEach(function(part){
         const ids=idGrafLanding(part,extra),status=document.getElementById(ids[0]);
-        status.style.display='block';status.className='alert alert-info';status.textContent=part==='kategori'?'Memuatkan pecahan jam...':'Memuatkan dashboard...';
+        status.style.display='block';status.className='alert alert-info';status.textContent=part==='kategori'?'Loading pecahan jam...':'Loading dashboard...';
         document.getElementById(ids[1]).style.display='none';document.getElementById(ids[2]).textContent='';
       });});
       batalGrafLanding=panggilBacaanPortal('getPortalDashboard',[tahun],function(res) {
@@ -1780,11 +1780,10 @@ function renderStaffList() {
       }
       ['jawatan','kategori'].forEach(function(part){renderSection(primary&&primary[part],part,false);});
       if(sumberDashboardAktif==='banding')['jawatan','kategori'].forEach(function(part){renderSection(res.hrmis&&res.hrmis[part],part,true);});
-      const note=document.getElementById('dashboardSkopSumber'),p=res.kategori,h=res.hrmis&&res.hrmis.kategori;
+      const note=document.getElementById('dashboardSkopSumber'),h=res.hrmis&&res.hrmis.kategori;
       note.style.display='none';
       if(h&&h.status==='SUCCESS') {
-        const dates=h.bilTarikh>1?tarikhGrafHRMIS(h.tarikhAwal)+' – '+tarikhGrafHRMIS(h.tarikhAkhir):tarikhGrafHRMIS(h.tarikhAkhir);
-        note.style.display='block';note.textContent='Portal: '+(p&&p.status==='SUCCESS'?p.jumlahStaf+' staf':'Belum tersedia')+' · HRMIS: '+h.jumlahStaf+' staf · Tarikh laporan HRMIS: '+dates+'. Peratus mengikut jumlah staf sumber masing-masing.';
+        note.style.display='block';note.textContent='Tarikh upload laporan HRMIS: '+(h.tarikhMuatNaik?tarikhGrafHRMIS(h.tarikhMuatNaik):'Belum tersedia');
       }
     }
     function renderDashboardLandingChart(chartData,tambahanHRMIS) {
@@ -2005,5 +2004,6 @@ function renderStaffList() {
   </script>
 </body>
 </html>
+
 
 

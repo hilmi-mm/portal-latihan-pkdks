@@ -1239,9 +1239,12 @@ function getPortalDashboard(tahun) {
 // Pembahagi HRMIS ialah staf yang diimport, berasingan daripada PORTAL_V2.staff.
 function grafDashboardHRMIS_(year) {
   try {
-    var table=bacaJadualHRMIS_(),records=[],dates={},groups=Object.create(null);
+    var table=bacaJadualHRMIS_(),records=[],dates={},groups=Object.create(null),latestUpload=0;
     Object.keys(table.map).forEach(function(key){
       var row=table.map[key].values;if(Number(row[0])!==year)return;
+      // Dikemas Kini direkod ketika admin mengesahkan import; bukan tempoh laporan.
+      var stamp=row[11],uploadedAt=stamp instanceof Date?stamp.getTime():typeof stamp==='string'&&/^\d{4}-\d{2}-\d{2}T/.test(stamp)?Date.parse(stamp):NaN;
+      if(Number.isFinite(uploadedAt)&&uploadedAt>latestUpload)latestUpload=uploadedAt;
       var date=isoTarikhHRMIS_(row[9]);
       if(Number(date.slice(0,4))!==year)throw new Error('Tarikh laporan HRMIS tidak sepadan dengan tahun '+year+'. Semak HRMIS_JAM.');
       var minutes=Number(row[5]);
@@ -1257,7 +1260,7 @@ function grafDashboardHRMIS_(year) {
       return {jawatan:empty,kategori:empty};
     }
     var list=Object.keys(dates).sort(),warnings=[],counts=[0,0,0,0],belowOne=0;
-    // Julat tarikh lama, jika ada, ditunjukkan sekali dalam nota dashboard.
+    // Tarikh tempoh laporan kekal sebagai metadata; nota menggunakan tarikh import sebenar.
     records.forEach(function(minutes){
       if(minutes===0)counts[0]++;
       else if(minutes<60)belowOne++;
@@ -1267,7 +1270,7 @@ function grafDashboardHRMIS_(year) {
     });
     var labels=['0 Jam','1 - 19 Jam','20 - 39 Jam','40 Jam Ke Atas'];
     if(belowOne){counts.push(belowOne);labels.push('Kurang 1 Jam');warnings.push(belowOne+' staf mempunyai jumlah lebih 0 tetapi kurang 1 jam; dipaparkan berasingan.');}
-    var count=records.length,meta={sumber:'HRMIS',tahun:String(year),jumlahStaf:count,tarikhAwal:list[0],tarikhAkhir:list[list.length-1],bilTarikh:list.length};
+    var count=records.length,meta={sumber:'HRMIS',tahun:String(year),jumlahStaf:count,tarikhAwal:list[0],tarikhAkhir:list[list.length-1],bilTarikh:list.length,tarikhMuatNaik:latestUpload?Utilities.formatDate(new Date(latestUpload),'Asia/Kuala_Lumpur','yyyy-MM-dd'):null};
     var category=Object.assign({},meta,{status:'SUCCESS',warnings:warnings,kategori:labels.map(function(label,i){return {label:label,bilangan:counts[i],peratus:Math.round(counts[i]/count*1000)/10};})});
     var chart=Object.keys(groups).sort().map(function(key){
       var g=groups[key];g.peratus=Math.round(g.capai40/g.jumlahJawatan*1000)/10;return g;
@@ -1488,5 +1491,6 @@ function sertakanJamHRMIS_(data){
     });
   });});
 }
+
 
 
