@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <title>Rekod Latihan PKDKS</title>
+  <style>
+    body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+    .hero-bg { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: white; padding: 40px 20px; border-radius: 0 0 20px 20px; text-align: center; margin-bottom: 30px;}
+    .menu-card { cursor: pointer; transition: 0.3s; border-radius: 15px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .menu-card:hover { transform: translateY(-5px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+    .section-view { display: none; }
+    .active-view { display: flex; } 
+    #stafView.active-view, #bosView.active-view, #penilaianView.active-view, #selesaiView.active-view { display: block; }
+    #adminHRMISButton { position:fixed;right:18px;bottom:18px;z-index:1030;box-shadow:0 3px 12px #0002; }
+    #kategoriJamWrap { height:340px; max-width:900px; width:100%; margin:0 auto; }
+    @media (max-width:767.98px) { #kategoriJamWrap { height:440px; } }
+  </style>
+</head>
+<body>
+<button id="adminHRMISButton" type="button" class="btn btn-sm btn-dark" onclick="bukaAdminHRMIS()">⚙️ Admin</button>
+
+  <div class="hero-bg">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/2/26/Coat_of_arms_of_Malaysia.svg" alt="Jata Negara" style="height: 120px; margin-bottom: 15px;">
+    <h1>PORTAL REKOD LATIHAN ANGGOTA PKD KUALA SELANGOR</h1>
+    <button class="btn btn-light btn-sm mt-3" onclick="showView('menuView')" id="btnHome" style="display:none;">🏠 Kembali ke Menu Utama</button>
+  </div>
+
+  <div class="container pb-5">
+
+    <div id="menuView" class="section-view active-view row justify-content-center g-4">
+      <div class="col-12 d-flex justify-content-end align-items-center gap-2">
+        <label for="tahunLandingSelect" class="fw-bold">Tahun dashboard:</label>
+        <select id="tahunLandingSelect" class="form-select form-select-sm" style="max-width:140px" onchange="muatDashboardLanding()" aria-label="Tahun dashboard"><option value="">Memuatkan...</option></select>
+      </div>
+      <div class="col-12">
+        <div class="card p-4 shadow-sm" style="border-radius:15px;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 id="tajukGrafJawatan" class="text-primary mb-0">📈 Dashboard Prestasi Latihan Staf</h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="muatDashboardLanding()">🔄 Refresh</button>
+          </div>
+          <div id="dashboardLandingLoading" class="alert alert-info">Memuatkan dashboard...</div>
+          <div id="dashboardLandingChartWrap" style="display:none;">
+            <canvas id="chartLandingCapai40"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card p-4 shadow-sm" style="border-radius:15px;">
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2"><h5 id="tajukGrafKategori" class="text-primary mb-0">📊 Pecahan Jam Latihan Staf</h5><button type="button" class="btn btn-sm btn-outline-primary" onclick="muatGrafKategoriJam()">🔄 Refresh</button></div>
+          <p id="kategoriJamInfo" class="small text-secondary" role="status">Memuatkan jumlah staf...</p>
+          <div id="kategoriJamStatus" class="alert alert-info" role="status">Memuatkan pecahan jam...</div>
+          <div id="kategoriJamWrap" style="display:none"><canvas id="chartKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan" role="img"></canvas></div>
+        </div>
+      </div>
+      <div class="col-md-4 mt-4">
+        <div class="card menu-card h-100 text-center p-4" onclick="showView('kategoriView')">
+          <h1 class="display-4 mb-3">📝</h1>
+          <h4 class="text-primary">Isi Latihan Baru</h4>
+          <p class="text-muted small">Daftar rekod kursus, muat naik sijil & isi borang penilaian.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mt-4">
+        <div class="card menu-card h-100 text-center p-4" onclick="showView('bosView')">
+          <h1 class="display-4 mb-3">📊</h1>
+          <h4 class="text-success">Semak Rekod Latihan</h4>
+          <p class="text-muted small">Pantau rekod kursus staf dan pencapaian jam Latihan.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mt-4">
+        <div class="card menu-card h-100 text-center p-4" onclick="semakAksesPenilaian()">
+          <h1 class="display-4 mb-3">📋</h1>
+          <h4 class="text-danger" id="tajukPenilaianMenu">Kajian Keberkesanan</h4>
+          <p class="text-muted small">Borang Kajian Keberkesanan untuk penyelia lengkapkan selepas 90 Hari selesai latihan.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="kategoriView" class="section-view row justify-content-center g-4">
+      <div class="col-12 text-center mb-2"><h4 class="text-secondary">Sila Pilih Kategori Latihan Anda</h4></div>
+      <div class="col-md-5">
+        <div class="card menu-card h-100 text-center p-4" onclick="pilihKategori('KURSUS')">
+          <h1 class="display-4 mb-3">🏢</h1><h4 class="text-primary">Latihan</h4>
+          <p class="text-muted small fw-bold">Kursus, Seminar, Konvensyen, Bengkel, Forum, Simposium / Persidangan</p>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="card menu-card h-100 text-center p-4" onclick="pilihKategori('CME')">
+          <h1 class="display-4 mb-3">💻</h1><h4 class="text-info">Sesi Pembelajaran / Pembelajaran Kendiri</h4>
+          <p class="text-muted small fw-bold">CME Klinik/Jabatan, Ceramah, Program Motivasi, Lawatan Kerja, Simulasi, Pementoran, Bimbingan Khusus (Coaching), Pembelajaran melalui E-Pembelajaran Sektor Awam (EPSA), Online Learning dan lain-lain berkaitan.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="stafView" class="section-view">
+      <div class="card p-4 shadow-sm" style="border-radius: 15px;">
+        <h4 class="mb-4 text-primary border-bottom pb-2" id="tajukBorang">Borang Pendaftaran LDP</h4>
+        <form id="formLDP" onsubmit="submitFormLDP(event)">
+          <input type="hidden" id="fEditRow" value="">
+
+          <div id="tukarKategoriPanel" class="alert alert-info mb-3" style="display:none;">
+            <p id="tukarKategoriInfo" class="mb-2">Tersalah daftar CME, ceramah, EPSA atau sesi pembelajaran sebagai Latihan?</p>
+            <button type="button" id="btnTukarKePembelajaran" class="btn btn-outline-primary btn-sm" onclick="tukarKePembelajaran()">🔄 Tukar ke Sesi Pembelajaran / Pembelajaran Kendiri</button>
+            <button type="button" id="btnTukarKeLatihan" class="btn btn-outline-primary btn-sm" onclick="tukarKeLatihan()" style="display:none;">🔄 Tukar ke Latihan</button>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 mt-2"><h5 class="text-secondary border-bottom pb-2">Maklumat Sosio Demografi</h5></div>
+            
+            <div class="col-12"><div class="rounded border bg-light p-3">
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <label for="profilSelect" class="fw-bold">💾 Profil tersimpan</label>
+                <select id="profilSelect" class="form-select w-auto" onchange="isiProfilPilihan()"><option value="">-- Pilih profil --</option></select>
+                <button type="button" class="btn btn-sm btn-primary" onclick="simpanProfilManual()">Simpan / kemaskini profil</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="padamProfilPilihan()">Padam profil</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="kosongkanDemografi()">Kosongkan maklumat</button>
+              </div>
+              <label class="mt-2"><input type="checkbox" id="ingatProfil" class="form-check-input me-1"> Ingat maklumat saya untuk borang seterusnya pada peranti ini.</label>
+              <div id="profilStatus" class="small text-secondary mt-1" role="status">Profil termasuk nombor IC disimpan dalam pelayar ini jika dipilih. Elakkan pada komputer kongsi. Semak umur dan tempoh perkhidmatan sebelum menghantar.</div>
+            </div></div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Nama Penuh (Seperti Dalam Kad Pengenalan)</label>
+              <input type="text" class="form-control" id="fNama" style="text-transform:uppercase" oninput="this.value = this.value.toUpperCase();" required>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-bold">No. Kad Pengenalan</label>
+              <input type="text" class="form-control" id="fIC" required minlength="12" maxlength="12" pattern="\d{12}" title="Sila masukkan tepat 12 digit nombor IC tanpa sempang (-)" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+            </div>
+            
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Umur (Tahun)</label>
+              <input type="number" class="form-control" id="fUmur" required>
+            </div>
+            
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Jantina</label>
+              <select class="form-select" id="fJantina" required>
+                <option value="">-- Pilih --</option>
+                <option value="Lelaki">Lelaki</option>
+                <option value="Perempuan">Perempuan</option>
+              </select>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Jawatan</label>
+              <select class="form-select" id="fJawatan" required>
+                <option value="">-- Pilih Jawatan --</option>
+                <option value="Pakar Perubatan Kesihatan Awam (PPKA)">Pakar Perubatan Kesihatan Awam (PPKA)</option>
+                <option value="Pakar Perubatan Keluarga (FMS)">Pakar Perubatan Keluarga (FMS)</option>
+                <option value="Pegawai Perubatan (MO)">Pegawai Perubatan (MO)</option>
+                <option value="Pegawai Farmasi (PF)">Pegawai Farmasi (PF)</option>
+                <option value="Pegawai Dietetik, Pegawai Sains Pemakanan (PSP), Pegawai Teknologi Makanan (PTM)">Pegawai Dietetik, Pegawai Sains Pemakanan (PSP), Pegawai Teknologi Makanan (PTM)</option>
+                <option value="Pegawai Pendidikan Kesihatan (HEO)">Pegawai Pendidikan Kesihatan (HEO)</option>
+                <option value="Juru X-ray Diagnostik (JXR)">Juru X-ray Diagnostik (JXR)</option>
+                <option value="Penolong Pegawai Farmasi (PPF)">Penolong Pegawai Farmasi (PPF)</option>
+                <option value="Pegawai Pemulihan Perubatan Fisioterapi, Jurupulih Perubatan Fisioterapi, Jurupulih Perubatan Carakerja (Fisio, OT)">Pegawai Pemulihan Perubatan Fisioterapi, Jurupulih Perubatan Fisioterapi, Jurupulih Perubatan Carakerja (Fisio, OT)</option>
+                <option value="Juruteknologi Makmal Perubatan (MLT)">Juruteknologi Makmal Perubatan (MLT)</option>
+                <option value="Penolong Pegawai Perubatan (PPP)">Penolong Pegawai Perubatan (PPP)</option>
+                <option value="Penolong Pegawai Kesihatan Persekitaran (PPKP)">Penolong Pegawai Kesihatan Persekitaran (PPKP)</option>
+                <option value="Jururawat (Matron, Sister)">Jururawat (Matron, Sister)</option>
+                <option value="Jururawat (Staff Nurse)">Jururawat (Staff Nurse)</option>
+                <option value="Jururawat (Jururawat Masyarakat)">Jururawat (Jururawat Masyarakat)</option>
+                <option value="Pembantu Kesihatan Awam (PKA)">Pembantu Kesihatan Awam (PKA)</option>
+                <option value="Pembantu Perawatan Kesihatan (PPK)">Pembantu Perawatan Kesihatan (PPK)</option>
+                <option value="Penolong Pegawai Tadbir, Penolong Jurutera, Penolong Akauntan, Pembantu Tadbir (EO, PJ, PT)">Penolong Pegawai Tadbir, Penolong Jurutera, Penolong Akauntan, Pembantu Tadbir (EO, PJ, PT)</option>
+                <option value="Pembantu Khidmat Am (PA, PO, Pemandu)">Pembantu Khidmat Am (PA, PO, Pemandu)</option>
+              </select>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Skim / Gred</label>
+              <input type="text" class="form-control" id="fGred" required>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Jabatan / Tempat Bertugas</label>
+              <select class="form-select" id="fFasiliti" required>
+                <option value="">-- Pilih Tempat Bertugas --</option>
+                <option value="PKD Kuala Selangor">PKD Kuala Selangor</option>
+                <option value="KK Kuala Selangor dan KD di bawahnya">KK Kuala Selangor dan KD di bawahnya</option>
+                <option value="KK Bestari Jaya dan KD di bawahnya">KK Bestari Jaya dan KD di bawahnya</option>
+                <option value="KK Tanjung Karang dan KD di bawahnya">KK Tanjung Karang dan KD di bawahnya</option>
+                <option value="KK Ijok dan KD, KKOM di bawahnya">KK Ijok dan KD, KKOM di bawahnya</option>
+                <option value="KK Bukit Cherakah dan KD di bawahnya">KK Bukit Cherakah dan KD di bawahnya</option>
+                <option value="KK Jeram dan KD, KKOM di bawahnya">KK Jeram dan KD, KKOM di bawahnya</option>
+              </select>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Tempoh Berkhidmat Di Sektor Awam (Tahun)</label>
+              <input type="number" class="form-control" id="fTempohAwam" required>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Tempoh Berkhidmat Di Jawatan Sekarang (Tahun)</label>
+              <input type="number" class="form-control" id="fTempohJawatan" required>
+            </div>
+
+            <div class="col-12 mt-4"><h5 class="text-secondary border-bottom pb-2">Maklumat Latihan / Kursus</h5></div>
+            
+            <div class="col-md-12">
+              <label class="form-label fw-bold">Tajuk / Nama Kursus</label>
+              <input type="text" class="form-control" id="fKursus" required>
+            </div>
+            
+            <div class="col-md-4" id="divTarikhMula">
+              <label class="form-label fw-bold" id="lblTarikhMula">Tarikh Mula</label>
+              <input type="date" class="form-control" id="fTarikhMula" required>
+            </div>
+            
+            <div class="col-md-4" id="divTarikhTamat">
+              <label class="form-label fw-bold">Tarikh Tamat</label>
+              <input type="date" class="form-control" id="fTarikhTamat">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Tempoh Kursus</label>
+              <input type="text" class="form-control" id="fTempohKursus" required>
+            </div>
+            
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Tempat / Lokasi Kursus</label>
+              <input type="text" class="form-control" id="fTempat" required>
+            </div>
+            
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Jenis Kursus</label>
+              <select class="form-select" id="fJenisKursus" required>
+                <option value="">-- Pilih --</option>
+                <option value="Dalam Negara">Dalam Negara</option>
+                <option value="Luar Negara">Luar Negara</option>
+              </select>
+            </div>
+            
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Kategori Kursus</label>
+              <select class="form-select" id="fKategoriKursus" required>
+                <option value="">-- Pilih --</option>
+                <option value="Generik">Generik</option>
+                <option value="Fungsional">Fungsional</option>
+              </select>
+            </div>
+            
+            <div class="col-md-5" id="divAnjuran">
+              <label class="form-label fw-bold">Anjuran (KKM / Agensi Awam / Agensi Swasta / Lain-lain)</label>
+              <select class="form-select" id="fAnjuran" required>
+                <option value="">-- Pilih --</option>
+                <option value="KKM">KKM</option>
+                <option value="Agensi Awam">Agensi Awam</option>
+                <option value="Agensi Swasta">Agensi Swasta</option>
+                <option value="Lain-lain">Lain-lain</option>
+              </select>
+            </div>
+            
+            <div class="col-md-2">
+              <label class="form-label fw-bold">Kos (RM)</label>
+              <input type="number" class="form-control" id="fKos" value="0">
+            </div>
+            
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Bilangan Jam Latihan <br><small class="text-muted fw-normal">(1 hari bersamaan 6 jam latihan)</small></label>
+              <input type="number" step="0.5" class="form-control" id="fJam" required>
+            </div>
+            
+            <div class="col-md-2">
+              <label class="form-label fw-bold">Mata CPD <br><small class="text-muted fw-normal">(Jika ada)</small></label>
+              <input type="number" class="form-control" id="fCPD" value="0">
+            </div>
+
+            <div class="col-md-12 mb-3 mt-3">
+              <label class="form-label fw-bold" id="labelSijil">Muat Naik Sijil / Bukti (Maksimum 10MB)</label>
+              <input type="file" class="form-control" id="fSijil" accept=".pdf,image/*">
+              <small class="text-muted d-block mt-1">Nota: Anda boleh menghantar rekod ini tanpa sijil dahulu. Sijil boleh dimuat naik kemudian menggunakan fungsi kemaskini (Edit).</small>
+              <small class="text-danger" id="fileWarning" style="display:none;">Saiz fail melebihi 10MB!</small>
+            </div>
+
+            <div class="col-md-12 mb-3 mt-1">
+              <label class="form-label fw-bold">Latihan telah dimasukkan di dalam HRMIS</label>
+              <select class="form-select border-primary" id="fHRMIS" required>
+                <option value="">-- Pilih --</option>
+                <option value="Ya">Ya</option>
+                <option value="Tidak">Tidak</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div id="bahagianTahap1" class="mt-4 p-4 border rounded" style="display:none; background-color: #f8f9fa;">
+            <div class="text-center mb-4">
+              <h5 class="text-primary fw-bold text-uppercase">Borang Penilaian Kursus Jangka Pendek</h5>
+              <p class="small text-muted mb-0">Reaksi Pegawai Yang Menghadiri Kursus</p>
+            </div>
+            <div class="alert alert-warning py-2 mb-4" style="font-size: 0.9rem;">
+              Sila nyatakan persepsi anda terhadap kursus yang dihadiri dengan menandakan SATU pilihan skala 1 hingga 6: <br>
+              <strong>(1: Sangat Tidak Setuju &nbsp;➔&nbsp; 6: Sangat Setuju)</strong>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered table-hover bg-white">
+                <thead class="table-dark text-center align-middle">
+                  <tr><th style="width: 40%;">Kriteria</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+                </thead>
+                <tbody id="soalanT1Body"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-primary btn-lg px-5" id="btnSubmitForm">Hantar Rekod Latihan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="selesaiView" class="section-view">
+      <div class="card p-4 shadow-sm" style="border-radius:15px;max-width:950px;margin:auto">
+        <div class="alert alert-success"><h4 class="mb-1">✅ Rekod latihan berjaya disimpan</h4><span id="selesaiNama"></span></div>
+        <p>Teruskan pengisian dalam HRMIS. Salin setiap medan berasingan, kemudian paste ke ruangan yang sepadan.</p>
+        <div class="row g-3" id="selesaiMedan">
+          <div class="col-12"><label class="form-label" for="selesaiKursus">Nama kursus / tajuk</label><div class="input-group"><input id="selesaiKursus" class="form-control" readonly><button type="button" class="btn btn-outline-primary" onclick="salinSelepasSimpan('selesaiKursus')">Salin nama kursus</button></div></div>
+          <div class="col-md-6"><label class="form-label" for="selesaiPenganjur">Penganjur</label><div class="input-group"><input id="selesaiPenganjur" class="form-control" readonly><button type="button" class="btn btn-outline-primary" onclick="salinSelepasSimpan('selesaiPenganjur')">Salin</button></div></div>
+          <div class="col-md-6"><label class="form-label" for="selesaiTempat">Tempat</label><div class="input-group"><input id="selesaiTempat" class="form-control" readonly><button type="button" class="btn btn-outline-primary" onclick="salinSelepasSimpan('selesaiTempat')">Salin</button></div></div>
+          <div class="col-md-6"><label class="form-label" for="selesaiJam">Jam latihan</label><div class="input-group"><input id="selesaiJam" class="form-control" readonly><button type="button" class="btn btn-outline-primary" onclick="salinSelepasSimpan('selesaiJam')">Salin</button></div></div>
+          <div class="col-md-6"><label class="form-label">Tarikh mula → tamat</label><p id="selesaiTarikh" class="form-control bg-light mb-0"></p></div>
+        </div>
+        <p class="small text-muted mt-3">Tarikh dipaparkan untuk rujukan semasa memilih kalendar HRMIS. Halaman ini tidak mengisi borang HRMIS secara automatik.</p>
+        <p id="selesaiSalinStatus" class="small text-success" role="status" aria-live="polite"></p>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          <a class="btn btn-primary" href="https://hrmis2.eghrmis.gov.my/HRMISNET/Common/Main/Default.aspx?id=03010201" target="_blank" rel="noopener">🔗 Buka HRMIS</a>
+          <button type="button" class="btn btn-success" onclick="showView('kategoriView')">➕ Isi latihan seterusnya</button>
+          <a id="selesaiSijil" class="btn btn-outline-primary" target="_blank" rel="noopener" style="display:none">📄 Buka sijil</a>
+          <button type="button" class="btn btn-outline-secondary" onclick="showView('menuView')">🏠 Menu utama</button>
+        </div>
+        <p class="small text-muted mt-3 mb-0">Selepas menghantar rekod dalam HRMIS, tandakan status melalui Semak Rekod Latihan → Tindakan → HRMIS.</p>
+      </div>
+    </div>
+
+    <div id="bosView" class="section-view">
+      <div class="card p-4 shadow-sm" style="border-radius: 15px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="text-success mb-0">Semakan Rekod Latihan</h4>
+          <div>
+            <button class="btn btn-sm btn-outline-success" onclick="muatDataDashboard()">🔄 Refresh Data</button>
+            <button class="btn btn-sm btn-success" onclick="exportExcelSemakan()">📥 Export Excel</button>
+          </div>
+        </div>
+        <div id="dashLoading" class="alert alert-info">Memuatkan data, sila tunggu...</div>
+        <div id="dashContent" style="display:none;">
+          <div class="row mb-3 align-items-end bg-light p-3 rounded">
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Pilih Perjawatan:</label>
+              <select class="form-select" id="jawatanSelect" onchange="onJawatanChange()"></select>
+            </div>
+            <div class="col-md-3" id="divFasilitiSelect" style="display:none;">
+              <label class="form-label fw-bold">Pilih Fasiliti / KK:</label>
+              <select class="form-select" id="fasilitiSelect" onchange="renderStaffList()"></select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-bold">Pilih Tahun:</label>
+              <select class="form-select" id="tahunSelect" onchange="onTahunChange()"></select>
+            </div>
+            <div class="col-md-4 ms-auto">
+              <label class="form-label fw-bold">Carian Pantas:</label>
+              <input type="text" class="form-control border-success" id="searchSemak" placeholder="🔍 Nama, IC, Kursus..." onkeyup="saringSemakan()">
+            </div>
+          </div>
+          <div id="staffContainer" class="accordion mt-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="penilaianView" class="section-view">
+      <div class="card p-4 shadow-sm border-danger" style="border-radius: 15px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="text-danger mb-0 text-uppercase">Kajian Keberkesanan Kursus</h4>
+          <div>
+            <button class="btn btn-sm btn-outline-danger" onclick="muatDataDashboard()">🔄 Refresh Data</button>
+          </div>
+        </div>
+        
+        <div class="row mb-3 align-items-end bg-light p-3 rounded">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Pilih Perjawatan Pegawai Dinilai (PYD):</label>
+            <select class="form-select" id="jawatanSelectPenyelia" onchange="onJawatanPenyeliaChange()"></select>
+          </div>
+          <div class="col-md-4" id="divFasilitiSelectPenyelia" style="display:none;">
+            <label class="form-label fw-bold">Pilih Fasiliti / KK:</label>
+            <select class="form-select" id="fasilitiSelectPenyelia" onchange="renderPenilaianList()"></select>
+          </div>
+          <div class="col-md-4 ms-auto">
+            <label class="form-label fw-bold">Carian Pantas:</label>
+            <input type="text" class="form-control border-danger" id="searchPenilaian" placeholder="🔍 Nama, IC, Kursus..." onkeyup="saringPenilaian()">
+          </div>
+        </div>
+        
+        <ul class="nav nav-tabs mt-4" id="penilaianTab">
+          <li class="nav-item"><button class="nav-link active fw-bold text-danger" data-bs-toggle="tab" data-bs-target="#tabTertunggak">Perlu Dinilai (>90 Hari)</button></li>
+          <li class="nav-item"><button class="nav-link fw-bold text-secondary" data-bs-toggle="tab" data-bs-target="#tabBelumMatang">Belum Matang (<90 Hari)</button></li>
+          <li class="nav-item"><button class="nav-link fw-bold text-success" data-bs-toggle="tab" data-bs-target="#tabSelesai">Telah Dinilai</button></li>
+        </ul>
+        <div class="tab-content mt-3 border border-top-0 p-3 bg-white rounded-bottom">
+          <div class="tab-pane fade show active" id="tabTertunggak"><div id="penilaianContainerTertunggak"></div></div>
+          <div class="tab-pane fade" id="tabBelumMatang"><div id="penilaianContainerBelumMatang"></div></div>
+          <div class="tab-pane fade" id="tabSelesai"><div id="penilaianContainerSelesai"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div> <div class="modal fade" id="modalPenilaianModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title">📊 Borang Penilaian Kursus (Staf)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <h6 class="text-primary fw-bold mb-3" id="modalPenilaianTajuk"></h6>
+          <div id="modalPenilaianBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalPaparPenyelia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">✅ Borang Keberkesanan Kursus (Ketua Jabatan)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <h6 class="text-success fw-bold mb-3 border-bottom pb-2" id="modalPaparPenyeliaTajuk"></h6>
+          <div id="modalPaparPenyeliaBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalBorangPenyelia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <form onsubmit="submitPenilaianPenyelia(event)" class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title text-uppercase">📋 Kajian Keberkesanan (Ketua Jabatan)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        
+        <div class="modal-body bg-light">
+          <h6 class="fw-bold text-dark mb-1" id="lblNamaPenyelia"></h6>
+          <p class="small text-danger fw-bold mb-4" id="lblKursusPenyelia"></p>
+          <input type="hidden" id="penyeliaRowValue">
+
+          <div class="card mb-4 shadow-sm border-0">
+            <div class="card-header bg-secondary text-white fw-bold">BAHAGIAN C: MAKLUMAT KETUA JABATAN / PENYELIA</div>
+            <div class="card-body row g-3">
+              <div class="col-md-6"><label class="form-label fw-bold">1. Nama Pegawai (Penyelia)</label><input type="text" class="form-control" id="fNamaBos" required></div>
+              <div class="col-md-6"><label class="form-label fw-bold">2. Jawatan</label><input type="text" class="form-control" id="fJawatanBos" required></div>
+              <div class="col-md-6"><label class="form-label fw-bold">3. Gred Jawatan</label><input type="text" class="form-control" id="fGredBos" required></div>
+              <div class="col-md-6"><label class="form-label fw-bold">4. Skim</label><input type="text" class="form-control" id="fSkimBos" required></div>
+              <div class="col-12"><label class="form-label fw-bold">5. Tempoh Menjadi Penyelia Kepada Peserta:</label></div>
+              <div class="col-md-6"><div class="input-group"><input type="number" class="form-control" id="fTempohTahunBos" placeholder="Tahun" required><span class="input-group-text">Tahun</span></div></div>
+              <div class="col-md-6"><div class="input-group"><input type="number" class="form-control" id="fTempohBulanBos" placeholder="Bulan" required><span class="input-group-text">Bulan</span></div></div>
+            </div>
+          </div>
+
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-danger text-white fw-bold">BAHAGIAN D: REAKSI KETUA JABATAN TERHADAP PYD</div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-bordered table-hover bg-white">
+                  <thead class="table-dark text-center align-middle">
+                    <tr><th style="width: 50%;">Kriteria (1: Sangat Tidak Setuju - 6: Sangat Setuju)</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+                  </thead>
+                  <tbody id="soalanBahagianDBody"></tbody>
+                </table>
+              </div>
+              <div class="mt-3">
+                <label class="form-label fw-bold text-danger">Cadangan Penambahbaikan Terhadap Kursus Yang Dihadiri Oleh PYD:</label>
+                <textarea class="form-control border-danger" id="fUlasanPenyelia" rows="3" required placeholder="Sila tulis ulasan..."></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-danger" id="btnSubmitPenyelia">Hantar Penilaian</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalAdminHRMIS" tabindex="-1" aria-labelledby="tajukAdminHRMIS" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header"><h5 id="tajukAdminHRMIS" class="modal-title">⚙️ Admin · Import laporan HRMIS</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+      <div class="modal-body">
+        <form id="adminHRMISLoginForm" onsubmit="loginAdminHRMIS(event)" class="mx-auto" style="max-width:460px">
+          <p>Akses import memerlukan kata laluan khas admin.</p>
+          <label for="adminHRMISPassword" class="form-label">Kata laluan admin</label>
+          <input id="adminHRMISPassword" class="form-control mb-3" type="password" autocomplete="current-password" required>
+          <button id="btnLoginAdminHRMIS" type="submit" class="btn btn-primary">Log masuk admin</button>
+        </form>
+        <div id="adminHRMISPanel" style="display:none">
+          <div class="d-flex justify-content-between gap-2 align-items-center mb-3"><span class="text-success">Sesi admin aktif</span><button type="button" class="btn btn-sm btn-outline-secondary" onclick="logoutAdminHRMIS()">Log keluar</button></div>
+          <div class="row g-3">
+            <div class="col-md-3"><label class="form-label" for="adminHRMISYear">Tahun</label><input id="adminHRMISYear" class="form-control" type="number" min="2000" max="2099" value="2026" onchange="batalPratontonHRMIS()"></div>
+            <div class="col-md-4"><label class="form-label" for="adminHRMISDate">Tarikh laporan</label><input id="adminHRMISDate" class="form-control" type="date" onchange="batalPratontonHRMIS()"><div class="form-text">Boleh dikosongkan jika tarikh ada dalam laporan.</div></div>
+            <div class="col-md-12"><label class="form-label" for="adminHRMISFiles">Upload XLSX</label><input id="adminHRMISFiles" class="form-control" type="file" accept=".xlsx" multiple onchange="batalPratontonHRMIS()"><div class="form-text">Pilih laporan keseluruhan sahaja jika sudah merangkumi semua staf. Jika pilih dua laporan bertindih, IC yang sama dikira sekali.</div></div>
+            <div class="col-md-12"><label class="form-label" for="adminHRMISLinks">Atau pautan Google Sheet</label><textarea id="adminHRMISLinks" rows="2" class="form-control" placeholder="Satu pautan Google Sheet setiap baris" oninput="batalPratontonHRMIS()"></textarea><div class="form-text">Akaun yang deploy portal mesti mempunyai akses membaca Sheet itu.</div></div>
+          </div>
+          <button id="btnPreviewHRMIS" type="button" class="btn btn-primary mt-3" onclick="semakImportHRMIS()">1. Semak import</button>
+          <section id="adminHRMISPreview" class="mt-4" style="display:none">
+            <h6>Pratonton · Belum disimpan</h6><p id="adminHRMISSummary" class="small"></p>
+            <div id="adminHRMISIssues" class="alert alert-warning" style="display:none"></div>
+            <div class="d-flex gap-2 mb-2"><input id="adminHRMISSearch" class="form-control form-control-sm" placeholder="Cari nama / IC / unit" oninput="renderPratontonHRMIS(0)"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="renderPratontonHRMIS(adminHRMISPage-1)">←</button><span id="adminHRMISPageInfo" class="text-nowrap small align-self-center"></span><button type="button" class="btn btn-sm btn-outline-secondary" onclick="renderPratontonHRMIS(adminHRMISPage+1)">→</button></div>
+            <div class="table-responsive"><table class="table table-sm table-bordered align-middle"><thead><tr><th>IC</th><th>Nama</th><th>Unit/Jawatan</th><th>Jam lama</th><th>Jam laporan</th><th>Padanan</th><th>Tindakan</th></tr></thead><tbody id="adminHRMISRows"></tbody></table></div>
+            <p class="small text-muted">Jam terkumpul menggantikan nilai lama untuk IC dan tahun yang sama. Rekod yang tiada dalam fail tidak ditukar menjadi 0 jam. Staf yang belum mempunyai rekod portal tetap disimpan dalam HRMIS_JAM.</p>
+            <div class="form-check mb-3"><input id="adminHRMISConfirmCheck" type="checkbox" class="form-check-input" onchange="semakButangConfirmHRMIS()"><label for="adminHRMISConfirmCheck" class="form-check-label">Saya telah menyemak tahun, tarikh dan pratonton ini untuk dikemas kini.</label></div>
+            <button id="btnConfirmHRMIS" type="button" class="btn btn-success" onclick="sahkanImportHRMIS()" disabled>2. Sahkan & kemas kini HRMIS_JAM</button>
+          </section>
+        </div>
+        <div id="adminHRMISMessage" class="mt-3 small" role="status" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button></div>
+    </div></div>
+  </div>
+
+  <div class="modal fade" id="modalStatusHRMIS" tabindex="-1" aria-labelledby="tajukStatusHRMIS" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+      <form id="formStatusHRMIS" onsubmit="simpanStatusHRMISPantas(event)">
+        <div class="modal-header"><h5 class="modal-title" id="tajukStatusHRMIS">Kemas kini Status HRMIS</h5><button type="button" class="btn-close" aria-label="Tutup" onclick="tutupStatusHRMIS()"></button></div>
+        <div class="modal-body">
+          <p id="hrmisQuickPegawai" class="fw-bold mb-1"></p>
+          <p id="hrmisQuickKursus" class="mb-1"></p>
+          <p id="hrmisQuickTarikh" class="small text-muted"></p>
+          <label for="hrmisQuickStatus" class="form-label">Status rekod ini</label>
+          <select id="hrmisQuickStatus" class="form-select mb-3" required><option value="Tidak">Belum diisi</option><option value="Ya">Sudah diisi/dihantar</option></select>
+          <label for="hrmisQuickIC" class="form-label">No. Kad Pengenalan untuk pengesahan</label>
+          <input id="hrmisQuickIC" type="password" class="form-control" inputmode="numeric" autocomplete="off" required>
+          <p class="small text-muted mt-2 mb-3">Ini pengakuan staf telah mengisi HRMIS. Jumlah jam HRMIS yang disahkan tidak berubah.</p>
+          <div id="hrmisQuickInfo" class="small" role="status" aria-live="polite"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="tutupStatusHRMIS()">Tutup</button><button id="btnSimpanStatusHRMIS" type="submit" class="btn btn-primary">Simpan status</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  <script>
+    let kategoriJamChart=null;
+    const PROFIL_KEY='pkdks.latihan.profil.v2';
+    const medanProfil=['fNama','fIC','fUmur','fJantina','fJawatan','fGred','fFasiliti','fTempohAwam','fTempohJawatan'];
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function bacaProfil() {
+      try { const x=JSON.parse(localStorage.getItem(PROFIL_KEY)||'{}'); return {profiles:Array.isArray(x.profiles)?x.profiles:[],lastIc:x.lastIc||'',autoFill:!!x.autoFill}; }
+      catch (_) { return {profiles:[],lastIc:'',autoFill:false}; }
+    }
+    function tulisProfil(data) {
+      try { localStorage.setItem(PROFIL_KEY, JSON.stringify(data)); return true; }
+      catch (_) { document.getElementById('profilStatus').textContent='Pelayar menyekat simpanan profil. Borang masih boleh dihantar; profil tidak dapat diingati.'; return false; }
+    }
+    function senaraiProfil(data) {
+      const select=document.getElementById('profilSelect'); select.replaceChildren(new Option('-- Pilih profil --',''));
+      data.profiles.forEach(p => select.add(new Option((p.fNama||'Profil')+' • IC …'+String(p.fIC||'').slice(-4),p.fIC)));
+      select.value=data.lastIc;
+    }
+    function isiMedanProfil(profile) {
+      if(document.getElementById('fEditRow').value) { alert('Profil tidak boleh ditukar semasa edit rekod.'); return; }
+      medanProfil.forEach(id => { document.getElementById(id).value=profile[id]||''; });
+      document.getElementById('ingatProfil').checked=true;
+    }
+    function sediaProfil() {
+      const data=bacaProfil(); senaraiProfil(data);
+      document.getElementById('ingatProfil').checked=data.autoFill;
+      if(data.autoFill) { const p=data.profiles.find(p => p.fIC===data.lastIc); if(p) isiMedanProfil(p); }
+    }
+    function isiProfilPilihan() {
+      const p=bacaProfil().profiles.find(p=>p.fIC===document.getElementById('profilSelect').value); if(p) isiMedanProfil(p);
+    }
+    function simpanProfilManual() {
+      if(document.getElementById('fEditRow').value) { alert('Untuk simpan profil, buka borang latihan baharu.'); return; }
+      if(!document.getElementById('fNama').value.trim() || !/^\d{12}$/.test(document.getElementById('fIC').value)) { alert('Isi nama dan IC 12 digit dahulu.'); return; }
+      document.getElementById('ingatProfil').checked=true; simpanProfilSelepasHantar(true);
+    }
+    function simpanProfilSelepasHantar(manual=false) {
+      if(document.getElementById('fEditRow').value) return; // Never overwrite the admin's remembered profile with another staff member's edited record.
+      const data=bacaProfil(); data.autoFill=document.getElementById('ingatProfil').checked;
+      if(data.autoFill) {
+        const p={}; medanProfil.forEach(id => { p[id]=document.getElementById(id).value; });
+        data.profiles=data.profiles.filter(x=>x.fIC!==p.fIC); data.profiles.push(p); data.lastIc=p.fIC;
+      }
+      if(tulisProfil(data)) { senaraiProfil(data); if(manual) document.getElementById('profilStatus').textContent='Profil disimpan pada pelayar ini. Semak umur dan tempoh perkhidmatan sebelum menghantar.'; }
+    }
+    function padamProfilPilihan() {
+      const ic=document.getElementById('profilSelect').value; if(!ic) return;
+      if(!confirm('Padam profil tersimpan ini daripada pelayar? Rekod latihan dalam Sheet tidak dipadam.')) return;
+      const data=bacaProfil(); data.profiles=data.profiles.filter(p=>p.fIC!==ic);
+      if(data.lastIc===ic) { data.lastIc=''; data.autoFill=false; }
+      if(tulisProfil(data)) { senaraiProfil(data); kosongkanDemografi(); }
+    }
+    function kosongkanDemografi() {
+      if(document.getElementById('fEditRow').value) { alert('Maklumat rekod sedang diedit. Buka borang baharu untuk menukar profil.'); return; }
+      medanProfil.forEach(id=>document.getElementById(id).value='');
+      document.getElementById('ingatProfil').checked=false;
+      document.getElementById('profilSelect').value='';
+      const data=bacaProfil(); data.autoFill=false; tulisProfil(data);
+    }
+    function muatGrafKategoriJam() { muatDashboardLanding(); }
+    function renderGrafKategoriJam(res) {
+      if(!res || !Array.isArray(res.kategori))throw new Error('Respons pecahan jam tidak sah.');
+      const status=document.getElementById('kategoriJamStatus');
+        if(res.warnings && res.warnings.length) { status.style.display='block'; status.className='alert alert-warning'; status.textContent=res.warnings.join(' '); } else status.style.display='none';
+        document.getElementById('kategoriJamWrap').style.display='block';
+        const rows=res.kategori;
+        if(kategoriJamChart)kategoriJamChart.destroy();
+        const jumlahStaf=res.jumlahStaf || rows.reduce((sum,r)=>sum+r.bilangan,0);
+        document.getElementById('kategoriJamInfo').textContent='Jumlah organisasi: '+jumlahStaf+' staf • IC unik • Berdasarkan Tarikh Mula';
+        const warnaKategori=['#64748b','#f59e0b','#3b82f6','#10b981'];
+        const jumlahTengah={
+          id:'jumlahStafTengah',
+          afterDraw(chart) {
+            const arc=chart.getDatasetMeta(0).data[0];
+            if(!arc || !arc.innerRadius)return;
+            const ctx=chart.ctx, size=Math.max(22,Math.min(38,arc.innerRadius*.6));
+            ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillStyle='#0f172a'; ctx.font='700 '+size+'px "Segoe UI", sans-serif';
+            ctx.fillText(String(jumlahStaf),arc.x,arc.y-10);
+            ctx.fillStyle='#64748b'; ctx.font='13px "Segoe UI", sans-serif';
+            ctx.fillText('Jumlah staf',arc.x,arc.y+size*.65);
+            ctx.restore();
+          }
+        };
+        kategoriJamChart=new Chart(document.getElementById('chartKategoriJam'),{
+          type:'doughnut',
+          data:{labels:rows.map(r=>r.label),datasets:[{
+            label:'Bilangan staf', data:rows.map(r=>r.bilangan),
+            backgroundColor:warnaKategori, borderColor:'#ffffff', borderWidth:4,
+            borderRadius:5, hoverOffset:8
+          }]},
+          plugins:[ChartDataLabels,jumlahTengah],
+          options:{
+            responsive:true, maintainAspectRatio:false, cutout:'62%',
+            onResize(chart,size) {
+              chart.options.plugins.legend.position=size.width<640?'bottom':'right';
+            },
+            layout:{padding:18},
+            plugins:{
+              legend:{position:window.innerWidth<768?'bottom':'right',align:'center',labels:{
+                usePointStyle:true, pointStyle:'circle', padding:18, color:'#334155', font:{size:12},
+                generateLabels(chart){return rows.map((r,i)=>({
+                  text:r.label+' — '+r.bilangan+' staf ('+r.peratus.toFixed(1)+'%)',
+                  fillStyle:warnaKategori[i],strokeStyle:warnaKategori[i],lineWidth:0,
+                  pointStyle:'circle',hidden:!chart.getDataVisibility(i),index:i
+                }));}
+              }},
+              tooltip:{callbacks:{label:ctx=>rows[ctx.dataIndex].bilangan+' staf ('+rows[ctx.dataIndex].peratus.toFixed(1)+'%)'}},
+              datalabels:{
+                color:'#ffffff', textAlign:'center', font:{weight:'bold',size:12},
+                display:ctx=>rows[ctx.dataIndex].peratus>=5,
+                formatter:(v,ctx)=>v+' staf\n'+rows[ctx.dataIndex].peratus.toFixed(1)+'%'
+              }
+            }
+          }
+        });
+    }
+
+    let jenisLatihanAktif = '';
+    var globalData = {}; 
+    var chartLandingInstance = null;
+
+    function showView(viewId) {
+      document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active-view'));
+      document.getElementById(viewId).classList.add('active-view');
+      document.getElementById('btnHome').style.display = (viewId === 'menuView') ? 'none' : 'inline-block';
+      if (viewId === 'bosView' || viewId === 'penilaianView') muatDataDashboard();
+    }
+
+    function semakAksesPenilaian() {
+      let icInput = prompt("Sila masukkan No. Kad Pengenalan (IC) anda untuk mengakses ruangan Penyelia/Admin:");
+      if (icInput) {
+        let origText = document.getElementById('tajukPenilaianMenu').innerHTML;
+        document.getElementById('tajukPenilaianMenu').innerHTML = "⏳ Mengesahkan...";
+        
+        google.script.run.withSuccessHandler(res => {
+          document.getElementById('tajukPenilaianMenu').innerHTML = origText;
+          if(res.success) {
+            showView('penilaianView');
+          } else {
+            alert(res.message);
+          }
+        }).withFailureHandler(err => {
+          document.getElementById('tajukPenilaianMenu').innerHTML = origText;
+          alert("Ralat Server: " + err.message);
+        }).checkAdminPenyelia(icInput);
+      }
+    }
+
+    function pilihKategori(jenis) {
+      jenisLatihanAktif = jenis;
+      document.getElementById('tukarKategoriPanel').style.display = 'none';
+      let divT1 = document.getElementById('bahagianTahap1');
+      document.getElementById('formLDP').reset();
+      document.getElementById('fEditRow').value = "";
+      document.getElementById('tajukBorang').innerText = "Borang Pendaftaran Latihan Baru";
+      document.getElementById('btnSubmitForm').innerText = "Hantar Rekod Latihan";
+      
+      if(jenis === 'KURSUS') {
+        divT1.style.display = 'block';
+        document.getElementById('divTarikhTamat').style.display = 'block';
+        document.getElementById('fTarikhTamat').required = true;
+        document.getElementById('lblTarikhMula').innerText = "Tarikh Mula";
+        document.querySelectorAll('.t1-wajib').forEach(r => r.required = true);
+      } else {
+        divT1.style.display = 'none';
+        document.getElementById('divTarikhTamat').style.display = 'none';
+        document.getElementById('fTarikhTamat').required = false;
+        document.getElementById('lblTarikhMula').innerText = "Tarikh Kursus";
+        document.querySelectorAll('.t1-wajib').forEach(r => r.required = false);
+      }
+      sediaProfil();
+      showView('stafView');
+    }
+
+    const soalanT1Grup = [
+      { kategori: "i. Kursus", soalan: ["1. Objektif kursus tercapai.", "2. Tempoh masa kursus bersesuaian.", "3. Suasana kursus yang kondusif.", "4. Pelaksanaan program lancar."] },
+      { kategori: "ii. Isi Kandungan Kursus", soalan: ["1. Isi kandungan bersesuaian dengan kursus.", "2. Isi kandungan yang jelas.", "3. Nota disediakan bersesuaian dengan kursus."] },
+      { kategori: "iii. Penceramah (Keseluruhan)", soalan: ["1. Isi kandungan bersesuaian dengan kursus.", "2. Isi kandungan yang jelas.", "3. Nota disediakan bersesuaian dengan kursus.", "4. Pelaksanaan program lancar."] },
+      { kategori: "iv. Penilaian Keberkesanan Program Terhadap Peserta", soalan: ["1. Kursus ini memberi pengetahuan baru.", "2. Kursus ini meningkatkan pengetahuan berkaitan tugas harian.", "3. Kursus ini memberi faedah dalam melaksanakan tugas.", "4. Kursus ini membantu meningkatkan kemahiran bekerja.", "5. Kemahiran yang diperolehi menyumbang kepada pencapaian organisasi.", "6. Pembelajaran dalam kursus ini meningkatkan motivasi diri.", "7. Kursus ini meningkatkan komitmen kepada organisasi."] },
+      { kategori: "v. Logistik <br><small class='text-danger fw-normal'>(Kosongkan jika tidak berkaitan e.g. tiada makanan/penginapan disediakan/latihan online)</small>", isOptional: true, soalan: ["1. Penginapan yang selesa.", "2. Makanan dan minuman yang memuaskan.", "3. Fasiliti dan dewan yang kondusif.", "4. Kemudahan ICT disediakan."] },
+      { kategori: "vi. Urus Setia", soalan: ["1. Penglibatan dengan peserta yang memuaskan.", "2. Ketersediaan menerima maklum balas.", "3. Urus setia menjalankan tugas dengan baik."] }
+    ];
+
+    const soalanBahagianD = [
+      { tajuk: "1. PENGETAHUAN", soalan: [
+        { id: "1_1", teks: "1.1 Tahap pengetahuan PYD dalam bidang kursus yang dihadiri meningkat." },
+        { id: "1_2", teks: "1.2 PYD berkebolehan mengaplikasi pengetahuan yang dipelajari dalam tugas." },
+        { id: "1_3", teks: "1.3 PYD berkebolehan untuk berkongsi pengetahuan yang dimiliki kepada rakan sepejabat." },
+        { id: "1_4", teks: "1.4 Terdapat peningkatan dalam kualiti hasil kerja PYD." }
+      ]},
+      { tajuk: "2. KEMAHIRAN", soalan: [
+        { id: "2_1", teks: "2.1 Tahap kemahiran PYD dalam bidang kursus yang dihadiri meningkat." },
+        { id: "2_2", teks: "2.2 PYD berkebolehan mengaplikasi kemahiran yang dipelajari dalam tugas." },
+        { id: "2_3", teks: "2.3 PYD berkebolehan untuk berkongsi kemahiran yang dimiliki kepada rakan sepejabat." },
+        { id: "2_4", teks: "2.4 Terdapat peningkatan dalam kecekapan PYD menjalankan tugas dengan berkesan." }
+      ]},
+      { tajuk: "3. HASIL KESELURUHAN KURSUS/LATIHAN", soalan: [
+        { id: "3_1", teks: "3.1 Peningkatan dalam prestasi kerja PYD." },
+        { id: "3_2", teks: "3.2 Peningkatan sumbangan PYD kepada organisasi." },
+        { id: "3_3", teks: "3.3 PYD lebih cekap dalam menyelesaikan tugas." },
+        { id: "3_4", teks: "3.4 Peningkatan akauntabiliti PYD dalam tugas." }
+      ]},
+      { tajuk: "4. SIKAP", soalan: [
+        { id: "4_1", teks: "4.1 Kesediaan PYD untuk memikul tanggungjawab meningkat." },
+        { id: "4_2", teks: "4.2 PYD lebih berdisiplin dalam menjalankan tugas." },
+        { id: "4_3", teks: "4.3 PYD lebih bersikap positif dan bermotivasi dalam menjalankan tugas." },
+        { id: "4_4", teks: "4.4 Ketahanan mental PYD dalam keadaan mendesak meningkat." },
+        { id: "4_5", teks: "4.5 Tahap keyakinan dan komitmen PYD dalam menjalankan tugas meningkat." }
+      ]}
+    ];
+
+    function mulaPortal() {
+      if(mulaPortalSudah)return;
+      mulaPortalSudah=true;
+      let htmlT1 = ""; let qIndex = 0; 
+      soalanT1Grup.forEach((grup) => {
+        htmlT1 += `<tr class="table-secondary"><td colspan="7" class="fw-bold text-dark">${grup.kategori}</td></tr>`;
+        let reqClass = grup.isOptional ? "" : "t1-wajib"; 
+        grup.soalan.forEach((q) => {
+          htmlT1 += `<tr><td style="font-size:0.85rem;" class="text-start">${q}</td>`;
+          for(let v=1; v<=6; v++) { 
+            htmlT1 += `<td class="text-center align-middle"><input type="radio" name="t1q${qIndex}" value="${v}" class="radio-tahap1 ${reqClass} form-check-input" style="cursor:pointer;"></td>`; 
+          }
+          htmlT1 += `</tr>`; qIndex++;
+        });
+      });
+      document.getElementById('soalanT1Body').innerHTML = htmlT1;
+
+      let htmlD = "";
+      soalanBahagianD.forEach(grup => {
+        htmlD += `<tr class="table-secondary"><td colspan="7" class="fw-bold text-dark">${grup.tajuk}</td></tr>`;
+        grup.soalan.forEach(q => {
+          htmlD += `<tr><td style="font-size:0.85rem;" class="text-start">${q.teks}</td>`;
+          for(let v=1; v<=6; v++) { 
+            htmlD += `<td class="text-center align-middle"><input type="radio" name="bDq_${q.id}" value="${v}" class="form-check-input" style="cursor:pointer;" required></td>`; 
+          }
+          htmlD += `</tr>`;
+        });
+      });
+      document.getElementById('soalanBahagianDBody').innerHTML = htmlD;
+
+      muatDashboardLanding();
+    }
+
+    function submitFormLDP(e) {
+      e.preventDefault();
+      
+      let fileInput = document.getElementById('fSijil');
+      let file = fileInput.files[0];
+      let isEdit = document.getElementById('fEditRow').value !== "";
+
+      if (file && file.size > 10 * 1024 * 1024) { 
+        document.getElementById('fileWarning').style.display = 'block'; return;
+      }
+      document.getElementById('fileWarning').style.display = 'none';
+
+      let btn = document.getElementById('btnSubmitForm');
+      btn.innerHTML = "Sistem Sedang Menyimpan... ⏳"; btn.disabled = true;
+
+      let tMula = document.getElementById('fTarikhMula').value;
+      let tTamat = (jenisLatihanAktif === 'KURSUS' || isEdit) ? (document.getElementById('fTarikhTamat').value || tMula) : tMula;
+
+      let dataForm = {
+        editRow: document.getElementById('fEditRow').value,
+        nama: document.getElementById('fNama').value,
+        ic: document.getElementById('fIC').value,
+        umur: document.getElementById('fUmur').value,
+        jantina: document.getElementById('fJantina').value,
+        jawatan: document.getElementById('fJawatan').value,
+        gred: document.getElementById('fGred').value,
+        fasiliti: document.getElementById('fFasiliti').value,
+        tempohAwam: document.getElementById('fTempohAwam').value,
+        tempohJawatan: document.getElementById('fTempohJawatan').value,
+        kursus: document.getElementById('fKursus').value,
+        tarikhMula: tMula,
+        tarikhTamat: tTamat,
+        tempohKursus: document.getElementById('fTempohKursus').value,
+        tempat: document.getElementById('fTempat').value,
+        jenisKursus: document.getElementById('fJenisKursus').value,
+        kategoriKursus: document.getElementById('fKategoriKursus').value,
+        anjuran: document.getElementById('fAnjuran').value,
+        kos: document.getElementById('fKos').value,
+        jam: document.getElementById('fJam').value,
+        cpd: document.getElementById('fCPD').value,
+        hrmis: document.getElementById('fHRMIS').value,
+        tahap1: null
+      };
+
+      if (jenisLatihanAktif === 'KURSUS') {
+        dataForm.tahap1 = {};
+        let totalSoalan = document.querySelectorAll('.radio-tahap1').length / 6; 
+        for (let i = 0; i < totalSoalan; i++) {
+          let ans = document.querySelector(`input[name="t1q${i}"]:checked`);
+          if (ans) dataForm.tahap1[`S${i+1}`] = ans.value;
+        }
+      }
+
+      if (file) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+          let base64 = e.target.result.split(',')[1]; 
+          google.script.run
+            .withSuccessHandler(res => {
+              selepasSimpanLDP(res,dataForm,isEdit);
+              btn.innerHTML = "Hantar Rekod Latihan"; btn.disabled = false;
+            })
+            .withFailureHandler(err => {
+              alert("Ralat Pelayan: " + err.message);
+              btn.innerHTML = "Hantar Rekod Latihan"; btn.disabled = false;
+            })
+            .simpanRekodLDP(JSON.stringify(dataForm), file.name, file.type, base64);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        google.script.run
+          .withSuccessHandler(res => {
+            selepasSimpanLDP(res,dataForm,isEdit);
+            btn.innerHTML = "Hantar Rekod Latihan"; btn.disabled = false;
+          })
+          .withFailureHandler(err => {
+            alert("Ralat Pelayan: " + err.message);
+            btn.innerHTML = "Hantar Rekod Latihan"; btn.disabled = false;
+          })
+          .simpanRekodLDP(JSON.stringify(dataForm), "", "", "");
+      }
+    }
+
+function muatDataDashboard() {
+  document.getElementById('dashLoading').style.display = 'block';
+  document.getElementById('dashLoading').innerText = 'Memuatkan senarai jawatan...';
+  document.getElementById('dashContent').style.display = 'none';
+  globalData = {};
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res || res.status !== "SUCCESS") { 
+        alert(res ? res.message : "Ralat: Tiada respons dari server."); 
+        document.getElementById('dashLoading').style.display = 'none'; 
+        return; 
+      }
+
+      // Bina dropdown jawatan — jawatanSelect (Semak Rekod) ada opsyen "SEMUA PERJAWATAN",
+      // jawatanSelectPenyelia (Kajian Keberkesanan) kekal wajib pilih satu jawatan.
+      var optionsPenyelia = '<option value="">-- Pilih Jawatan --</option>';
+      res.senaraiJawatan.forEach(function(j) { optionsPenyelia += '<option value="' + j + '">' + j + '</option>'; });
+
+      var optionsSemakRekod = '<option value="">-- Pilih Jawatan --</option><option value="__SEMUA__">🔎 -- SEMUA PERJAWATAN --</option>';
+      res.senaraiJawatan.forEach(function(j) { optionsSemakRekod += '<option value="' + j + '">' + j + '</option>'; });
+
+      document.getElementById('jawatanSelect').innerHTML = optionsSemakRekod;
+      document.getElementById('jawatanSelectPenyelia').innerHTML = optionsPenyelia;
+
+      // Bina dropdown tahun
+      var tahunList = res.tahunList;
+      var currentYear = new Date().getFullYear().toString();
+      if (tahunList.indexOf(currentYear) === -1) tahunList.unshift(currentYear);
+      var optTahun = '';
+      tahunList.forEach(function(t) { optTahun += '<option value="' + t + '">' + t + '</option>'; });
+      document.getElementById('tahunSelect').innerHTML = optTahun;
+      document.getElementById('tahunSelect').value = currentYear;
+
+      document.getElementById('dashLoading').style.display = 'none';
+      document.getElementById('dashContent').style.display = 'block';
+    })
+    .withFailureHandler(function(err) {
+      alert('Ralat: ' + err.message);
+      document.getElementById('dashLoading').style.display = 'none';
+    })
+    .getDashboardJawatanSahaja();
+}
+
+var activeLoadId = 0;
+
+// ==========================================
+// FUNGSI BARU: MUAT SEMUA JAWATAN SEKALI GUS (untuk opsyen "SEMUA PERJAWATAN")
+// Guna fungsi getDashboardData() yang scan semua row sekaligus.
+// Nota: proses ini lebih berat berbanding lazy-load ikut jawatan,
+// jadi hanya jalan bila staf pilih opsyen ini secara eksplisit.
+// ==========================================
+function muatSemuaJawatanData() {
+  var myLoadId = ++activeLoadId;
+
+  document.getElementById('dashLoading').style.display = 'block';
+  document.getElementById('dashLoading').innerText = 'Memuatkan semua rekod (mungkin ambil masa lebih lama)...';
+  document.getElementById('dashContent').style.display = 'none';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (myLoadId !== activeLoadId) return;
+
+      document.getElementById('dashLoading').style.display = 'none';
+      document.getElementById('dashContent').style.display = 'block';
+
+      if (!res) { alert("Ralat: Tiada respons dari server. Cuba semula."); return; }
+      if (res.status !== "SUCCESS") { alert(res.message); return; }
+
+      globalData = {};
+      Object.keys(res.dataLengkap).forEach(function(j) {
+        globalData[j] = res.dataLengkap[j];
+      });
+
+      renderStaffList();
+    })
+    .withFailureHandler(function(err) {
+      if (myLoadId !== activeLoadId) return;
+      alert('Ralat muatkan data: ' + err.message);
+      document.getElementById('dashLoading').style.display = 'none';
+      document.getElementById('dashContent').style.display = 'block';
+    })
+    .getDashboardData();
+}
+
+function muatDataUntukJawatan(jawatan) {
+  if (!jawatan) { globalData = {}; renderStaffList(); renderPenilaianList(); return; }
+  
+  var myLoadId = ++activeLoadId;
+
+  document.getElementById('dashLoading').style.display = 'block';
+  document.getElementById('dashLoading').innerText = 'Memuatkan data ' + jawatan + '...';
+  document.getElementById('dashContent').style.display = 'none';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (myLoadId !== activeLoadId) return;
+      
+      document.getElementById('dashLoading').style.display = 'none';
+      document.getElementById('dashContent').style.display = 'block';
+
+      // NULL CHECK — punca error asal
+      if (!res) { alert("Ralat: Tiada respons dari server. Data terlalu besar atau server timeout. Cuba semula."); return; }
+      if (res.status !== "SUCCESS") { alert(res.message); return; }
+
+      globalData = {};
+      Object.keys(res.dataLengkap).forEach(function(j) {
+        globalData[j] = res.dataLengkap[j];
+      });
+
+      // Bina fasiliti dropdown
+      var actualKey = Object.keys(res.dataLengkap)[0];
+      var divFasSemak = document.getElementById('divFasilitiSelect');
+      var divFasKeb = document.getElementById('divFasilitiSelectPenyelia');
+      divFasSemak.style.display = 'none';
+      divFasKeb.style.display = 'none';
+
+      if (actualKey && globalData[actualKey]) {
+        var cekJaw = actualKey.toLowerCase();
+        var perluFasiliti = cekJaw.includes("(mo)") || cekJaw.includes("(pf)") || cekJaw.includes("(ppf)") || 
+                            cekJaw.includes("(ppp)") || cekJaw.includes("jururawat") || cekJaw.includes("(ppk)");
+        if (perluFasiliti) {
+          var stafList = globalData[actualKey];
+          var fasSet = new Set();
+          for (var st in stafList) fasSet.add(stafList[st].tempatBertugas);
+          var opts = '<option value="">-- Semua Fasiliti --</option>';
+          Array.from(fasSet).sort().forEach(function(f) { opts += '<option value="' + f + '">' + f + '</option>'; });
+          document.getElementById('fasilitiSelect').innerHTML = opts;
+          document.getElementById('fasilitiSelectPenyelia').innerHTML = opts;
+          divFasSemak.style.display = 'block';
+          divFasKeb.style.display = 'block';
+        }
+      }
+
+      // Sync dropdown jawatan Semak Rekod & Kajian Keberkesanan supaya sentiasa sepadan
+      var selUtama = document.getElementById('jawatanSelect');
+      var selPenyelia = document.getElementById('jawatanSelectPenyelia');
+      for (var i = 0; i < selUtama.options.length; i++) {
+        if (selUtama.options[i].value === jawatan) { selUtama.selectedIndex = i; break; }
+      }
+      for (var i = 0; i < selPenyelia.options.length; i++) {
+        if (selPenyelia.options[i].value === jawatan) { selPenyelia.selectedIndex = i; break; }
+      }
+      
+      renderStaffList();
+      renderPenilaianList();
+    })
+    .withFailureHandler(function(err) {
+      if (myLoadId !== activeLoadId) return;
+      alert('Ralat muatkan data: ' + err.message);
+      document.getElementById('dashLoading').style.display = 'none';
+      document.getElementById('dashContent').style.display = 'block';
+    })
+    .getDashboardDataByJawatan(jawatan, ""); 
+    // PATCH: hantar "" (bukan tahun) supaya server pulangkan SEMUA tahun.
+    // Semak Rekod Latihan tapis tahun di client (renderStaffList).
+    // Kajian Keberkesanan TIDAK tapis tahun (kursus lama yg baru matang 90 hari kekal kelihatan).
+}
+
+    var hrmisQuickTarget=null,hrmisQuickBusy=false,hrmisQuickModal=null;
+    function cariRekodHRMISPantas(ref) {
+      for(const job of Object.keys(globalData))for(const ic of Object.keys(globalData[job])) {
+        const staff=globalData[job][ic],course=(staff.courses || []).find(function(c){return c.row===ref;});
+        if(course)return {staff:staff,course:course};
+      }
+      return null;
+    }
+    function bukaStatusHRMIS(ref) {
+      if(hrmisQuickBusy){alert('Kemas kini sebelumnya masih diproses. Tunggu pengesahan sebelum meneruskan.');return;}
+      const target=cariRekodHRMISPantas(ref);
+      if(!target){alert('Rekod tidak ditemui dalam senarai. Klik Refresh Data dan cuba semula.');return;}
+      if(typeof bootstrap==='undefined'){alert('Paparan dialog belum tersedia. Refresh halaman portal.');return;}
+      hrmisQuickTarget=ref;
+      document.getElementById('hrmisQuickPegawai').textContent=target.staff.nama;
+      document.getElementById('hrmisQuickKursus').textContent=target.course.namaKursus;
+      document.getElementById('hrmisQuickTarikh').textContent=target.course.tarikhMula+' — '+target.course.tarikhTamat;
+      document.getElementById('hrmisQuickStatus').value=String(target.course.hrmis || '').trim().toLowerCase()==='ya'?'Ya':'Tidak';
+      document.getElementById('hrmisQuickIC').value='';
+      document.getElementById('hrmisQuickInfo').textContent='';
+      document.getElementById('btnSimpanStatusHRMIS').disabled=false;
+      document.getElementById('btnSimpanStatusHRMIS').textContent='Simpan status';
+      if(!hrmisQuickModal)hrmisQuickModal=new bootstrap.Modal(document.getElementById('modalStatusHRMIS'),{backdrop:'static',keyboard:false});
+      hrmisQuickModal.show();
+    }
+    function tutupStatusHRMIS() {
+      document.getElementById('hrmisQuickIC').value='';
+      if(hrmisQuickModal)hrmisQuickModal.hide();
+      if(!hrmisQuickBusy)hrmisQuickTarget=null;
+    }
+    function paparStatusHRMISDalamSenarai(oldRef,newRef,status) {
+      for(const job of Object.keys(globalData))for(const ic of Object.keys(globalData[job])) {
+        (globalData[job][ic].courses || []).forEach(function(c){if(c.row===oldRef){c.hrmis=status;c.row=newRef;}});
+      }
+      // Kemas kini baris sahaja: kekalkan accordion, tahun, penapis dan carian staf.
+      document.querySelectorAll('tr[data-hrmis-ref]').forEach(function(row) {
+        if(row.getAttribute('data-hrmis-ref')!==oldRef)return;
+        row.setAttribute('data-hrmis-ref',newRef);
+        const cell=row.querySelector('.hrmis-cell');
+        if(cell){cell.textContent=status==='Ya'?'✅':'❌';cell.title=status==='Ya'?'Sudah diisi/dihantar':'Belum diisi';}
+        [['hrmis','bukaStatusHRMIS'],['edit','editRekodSah'],['padam','padamRekodSah']].forEach(function(pair) {
+          const button=row.querySelector('[data-rekod-action="'+pair[0]+'"]');
+          if(button)button.setAttribute('onclick',pair[1]+"('"+newRef+"')");
+        });
+      });
+    }
+    function simpanStatusHRMISPantas(event) {
+      event.preventDefault();if(hrmisQuickBusy || !hrmisQuickTarget)return;
+      const ref=hrmisQuickTarget,status=document.getElementById('hrmisQuickStatus').value,ic=document.getElementById('hrmisQuickIC').value;
+      const info=document.getElementById('hrmisQuickInfo'),button=document.getElementById('btnSimpanStatusHRMIS');
+      if(!ic.trim()){info.className='small text-danger';info.textContent='Masukkan No. Kad Pengenalan untuk pengesahan.';return;}
+      hrmisQuickBusy=true;button.disabled=true;button.textContent='Menyimpan...';
+      info.className='small text-muted';info.textContent='Sedang mengemas kini status...';
+      const timer=setTimeout(function(){if(hrmisQuickBusy){info.className='small text-warning';info.textContent='Pengesahan masih belum diterima. Jangan hantar semula; tutup dialog dan semak status melalui Refresh Data.';}},45000);
+      function selesai(){clearTimeout(timer);hrmisQuickBusy=false;button.disabled=false;button.textContent='Simpan status';document.getElementById('hrmisQuickIC').value='';}
+      function gagal(message){selesai();info.className='small text-danger';info.textContent=message;}
+      try {
+        google.script.run.withSuccessHandler(function(res) {
+          if(!res || !res.success){gagal(res ? res.message : 'Tiada pengesahan daripada pelayan. Semak semula status melalui Refresh Data.');return;}
+          if(!/^\d+:\d+:[a-f0-9]{64}$/.test(String(res.recordRef)) || (res.hrmis!=='Ya' && res.hrmis!=='Tidak')){gagal('Pengesahan rekod tidak lengkap. Klik Refresh Data untuk mendapatkan status terkini.');return;}
+          selesai();hrmisQuickTarget=res.recordRef;
+          try {
+            paparStatusHRMISDalamSenarai(ref,res.recordRef,res.hrmis);
+            info.className='small text-success';info.textContent=res.message;
+          }catch(err) {
+            info.className='small text-warning';info.textContent='Status sudah disimpan, tetapi paparan belum dikemas kini. Klik Refresh Data untuk melihat status terkini.';
+          }
+        }).withFailureHandler(function(err){gagal('Ralat pelayan: '+(err.message || String(err)));}).kemasKiniStatusHRMIS(ref,ic,status);
+      }catch(err){gagal('Ralat sambungan: '+(err.message || String(err)));}
+    }
+
+    function padamRekodSah(row) {
+      let icInput = prompt("Sila masukkan No. Kad Pengenalan anda untuk PENGESAHAN PADAM rekod ini:");
+      if (icInput) {
+        document.getElementById('dashLoading').style.display = 'block';
+        document.getElementById('dashLoading').innerText = "Sedang memadam rekod... ⏳";
+        document.getElementById('dashContent').style.display = 'none';
+        google.script.run.withSuccessHandler(res => {
+          alert(res.message);
+          document.getElementById('dashLoading').innerText = "Memuatkan data, sila tunggu...";
+          if(res.success) muatDataDashboard(); 
+          else {
+             document.getElementById('dashLoading').style.display = 'none';
+             document.getElementById('dashContent').style.display = 'block';
+          }
+        }).padamRekodSahkanIC(row, icInput);
+      }
+    }
+
+    function editRekodSah(row) {
+      let icInput = prompt("Sila masukkan No. Kad Pengenalan anda untuk PENGESAHAN KEMASKINI rekod ini:");
+      if (icInput) {
+        document.getElementById('dashLoading').style.display = 'block';
+        document.getElementById('dashLoading').innerText = "Memuat turun rekod anda... ⏳";
+        document.getElementById('dashContent').style.display = 'none';
+        
+        google.script.run.withSuccessHandler(res => {
+          document.getElementById('dashLoading').style.display = 'none';
+          document.getElementById('dashContent').style.display = 'block';
+          
+          if(res.success) {
+             document.getElementById('formLDP').reset();
+             document.getElementById('fEditRow').value = row;
+             document.getElementById('fNama').value = res.data.nama;
+             document.getElementById('fIC').value = res.data.ic;
+             document.getElementById('fUmur').value = res.data.umur;
+             document.getElementById('fJantina').value = res.data.jantina;
+             document.getElementById('fJawatan').value = res.data.jawatan;
+             document.getElementById('fGred').value = res.data.gred;
+             document.getElementById('fFasiliti').value = res.data.fasiliti;
+             document.getElementById('fTempohAwam').value = res.data.tempohAwam;
+             document.getElementById('fTempohJawatan').value = res.data.tempohJawatan;
+             document.getElementById('fKursus').value = res.data.kursus;
+             document.getElementById('fTarikhMula').value = res.data.tarikhMula;
+             document.getElementById('fTarikhTamat').value = res.data.tarikhTamat;
+             document.getElementById('fTempohKursus').value = res.data.tempohKursus;
+             document.getElementById('fTempat').value = res.data.tempat;
+             document.getElementById('fJenisKursus').value = res.data.jenisKursus;
+             document.getElementById('fKategoriKursus').value = res.data.kategoriKursus;
+             document.getElementById('fAnjuran').value = res.data.anjuran;
+             document.getElementById('fKos').value = res.data.kos;
+             document.getElementById('fJam').value = res.data.jam;
+             document.getElementById('fCPD').value = res.data.cpd;
+             document.getElementById('fHRMIS').value = res.data.hrmis || "";
+
+             document.getElementById('tukarKategoriPanel').style.display = 'block';
+             document.getElementById('tukarKategoriInfo').textContent = res.data.tahap1 ? 'Kategori semasa: Latihan. Anda boleh membetulkan rekod kepada Sesi Pembelajaran / Pembelajaran Kendiri.' : 'Kategori semasa: Sesi Pembelajaran / Pembelajaran Kendiri. Anda boleh membetulkan rekod kepada Latihan.';
+             document.getElementById('btnTukarKePembelajaran').disabled = false;
+             document.getElementById('btnTukarKePembelajaran').textContent = '🔄 Tukar ke Sesi Pembelajaran / Pembelajaran Kendiri';
+             document.getElementById('btnTukarKePembelajaran').style.display = res.data.tahap1 ? 'inline-block' : 'none';
+             document.getElementById('btnTukarKeLatihan').style.display = res.data.tahap1 ? 'none' : 'inline-block';
+             document.getElementById('fTarikhTamat').required = !!res.data.tahap1;
+             let divT1 = document.getElementById('bahagianTahap1');
+             if(res.data.tahap1) {
+               jenisLatihanAktif = 'KURSUS';
+               divT1.style.display = 'block';
+               document.getElementById('divTarikhTamat').style.display = 'block';
+               document.getElementById('lblTarikhMula').innerText = "Tarikh Mula";
+               document.querySelectorAll('.t1-wajib').forEach(r => r.required = true);
+               for (let i = 0; i < 25; i++) {
+                 let val = res.data.tahap1["S" + (i+1)];
+                 if(val) {
+                   let radio = document.querySelector(`input[name="t1q${i}"][value="${val}"]`);
+                   if(radio) radio.checked = true;
+                 }
+               }
+             } else {
+               jenisLatihanAktif = 'CME';
+               divT1.style.display = 'none';
+               document.getElementById('divTarikhTamat').style.display = 'none';
+               document.getElementById('lblTarikhMula').innerText = "Tarikh Kursus";
+               document.querySelectorAll('.t1-wajib').forEach(r => r.required = false);
+             }
+
+             document.getElementById('tajukBorang').innerText = "Kemaskini Rekod LDP";
+             document.getElementById('btnSubmitForm').innerText = "Simpan Kemaskini LDP";
+             
+             showView('stafView');
+          } else {
+             alert(res.message);
+          }
+        }).getRekodUntukEdit(row, icInput);
+      }
+    }
+
+    function tukarKePembelajaran() {
+      if (!document.getElementById('fEditRow').value || jenisLatihanAktif !== 'KURSUS') return;
+      if (!confirm('Tukar rekod ini kepada Sesi Pembelajaran / Pembelajaran Kendiri?\n\nApabila disimpan, jawapan penilaian kursus yang telah diisi akan dikosongkan dan rekod ini tidak lagi memerlukan Kajian Keberkesanan. Jam, tarikh dan maklumat latihan lain dikekalkan.\n\nTekan OK untuk teruskan, kemudian Simpan Kemaskini LDP.')) return;
+      jenisLatihanAktif = 'CME';
+      document.getElementById('bahagianTahap1').style.display = 'none';
+      document.querySelectorAll('.t1-wajib').forEach(r => r.required = false);
+      document.getElementById('divTarikhTamat').style.display = 'none';
+      document.getElementById('fTarikhTamat').required = false;
+      document.getElementById('lblTarikhMula').innerText = 'Tarikh Kursus';
+      document.getElementById('tajukBorang').innerText = 'Kemaskini Rekod — Sesi Pembelajaran / Pembelajaran Kendiri';
+      document.getElementById('tukarKategoriInfo').textContent = 'Kategori baharu: Sesi Pembelajaran / Pembelajaran Kendiri. Perubahan hanya berkuat kuasa selepas menekan Simpan Kemaskini LDP.';
+      document.getElementById('btnTukarKePembelajaran').style.display = 'none';
+      document.getElementById('btnTukarKeLatihan').style.display = 'inline-block';
+    }
+
+    function tukarKeLatihan() {
+      if (!document.getElementById('fEditRow').value || jenisLatihanAktif !== 'CME') return;
+      if (!confirm('Tukar rekod ini kepada Latihan?\n\nSila lengkapkan tarikh tamat dan Borang Penilaian Kursus sebelum menyimpan. Rekod ini akan tertakluk kepada Kajian Keberkesanan selepas 90 hari dari tarikh tamat, seperti latihan biasa. Jika ada status penilaian penyelia lama, status itu akan ditetapkan semula supaya dinilai semula.\n\nJam dan maklumat latihan lain dikekalkan.')) return;
+      jenisLatihanAktif = 'KURSUS';
+      document.getElementById('bahagianTahap1').style.display = 'block';
+      document.querySelectorAll('.t1-wajib').forEach(r => r.required = true);
+      document.getElementById('divTarikhTamat').style.display = 'block';
+      document.getElementById('fTarikhTamat').required = true;
+      document.getElementById('lblTarikhMula').innerText = 'Tarikh Mula';
+      document.getElementById('tajukBorang').innerText = 'Kemaskini Rekod — Latihan';
+      document.getElementById('tukarKategoriInfo').textContent = 'Kategori baharu: Latihan. Lengkapkan Borang Penilaian Kursus dan tekan Simpan Kemaskini LDP untuk mengesahkan perubahan.';
+      document.getElementById('btnTukarKePembelajaran').style.display = 'inline-block';
+      document.getElementById('btnTukarKeLatihan').style.display = 'none';
+    }
+
+    function paparPenilaianTahap1(jawatan, ic, cIdx) {
+      let td = globalData[jawatan][ic];
+      let kursus = td.courses[cIdx];
+      let scores = kursus.tahap1;
+      let html = `<table class="table table-bordered table-sm"><thead class="table-light"><tr><th>Kriteria</th><th class="text-center">Skor (1-6)</th></tr></thead><tbody>`;
+      let flatIdx = 0;
+      soalanT1Grup.forEach(grup => {
+         html += `<tr class="table-secondary"><td colspan="2" class="fw-bold">${grup.kategori}</td></tr>`;
+         grup.soalan.forEach(q => {
+            html += `<tr><td>${q}</td><td class="text-center fw-bold text-primary">${scores[flatIdx] || '-'}</td></tr>`;
+            flatIdx++;
+         });
+      });
+      html += `</tbody></table>`;
+      document.getElementById('modalPenilaianBody').innerHTML = html;
+      document.getElementById('modalPenilaianTajuk').innerText = "KURSUS: " + kursus.namaKursus.toUpperCase();
+      new bootstrap.Modal(document.getElementById('modalPenilaianModal')).show();
+    }
+
+    function paparPenilaianPenyelia(jawatan, ic, cIdx) {
+      let td = globalData[jawatan][ic];
+      let kursus = td.courses[cIdx];
+      let cData = kursus.bahagianC;
+      
+      let html = `
+        <div class="card mb-3 border-0 bg-white shadow-sm p-3">
+          <h6 class="fw-bold text-secondary border-bottom pb-2">BAHAGIAN C: MAKLUMAT PENYELIA</h6>
+          <div class="row small">
+            <div class="col-md-6 mb-2"><strong>Nama Penyelia:</strong> <br>${cData.namaBos}</div>
+            <div class="col-md-6 mb-2"><strong>Tarikh Dinilai:</strong> <br><span class="badge bg-success">${cData.tarikhBos}</span></div>
+            <div class="col-md-6 mb-2"><strong>Jawatan:</strong> <br>${cData.jawatanBos}</div>
+            <div class="col-md-6 mb-2"><strong>Gred:</strong> <br>${cData.gredBos}</div>
+            <div class="col-md-6 mb-2"><strong>Skim:</strong> <br>${cData.skimBos}</div>
+            <div class="col-md-6 mb-2"><strong>Tempoh Seliaan:</strong> <br>${cData.tempohBos}</div>
+          </div>
+        </div>
+        <div class="card border-0 shadow-sm bg-white p-3">
+          <h6 class="fw-bold text-secondary border-bottom pb-2">BAHAGIAN D: REAKSI TERHADAP PEGAWAI</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm small">
+              <thead class="table-light"><tr><th>Kriteria</th><th class="text-center">Skor (1-6)</th></tr></thead>
+              <tbody>`;
+      
+      let flatIdx = 0;
+      soalanBahagianD.forEach(grup => {
+         html += `<tr class="table-secondary"><td colspan="2" class="fw-bold">${grup.tajuk}</td></tr>`;
+         grup.soalan.forEach(q => {
+            html += `<tr><td>${q.teks}</td><td class="text-center fw-bold text-primary align-middle">${cData.skor[flatIdx] || '-'}</td></tr>`;
+            flatIdx++;
+         });
+      });
+      
+      html += `</tbody></table></div>
+          <div class="alert alert-secondary mt-3 small border-secondary"><strong>Cadangan Penambahbaikan:</strong><br>${cData.ulasan}</div>
+        </div>`;
+      
+      document.getElementById('modalPaparPenyeliaBody').innerHTML = html;
+      document.getElementById('modalPaparPenyeliaTajuk').innerText = "PEGAWAI: " + td.nama.toUpperCase();
+      new bootstrap.Modal(document.getElementById('modalPaparPenyelia')).show();
+    }
+
+    function onJawatanChange() {
+      let jaw = document.getElementById("jawatanSelect").value;
+      document.getElementById("divFasilitiSelect").style.display = "none";
+      document.getElementById("fasilitiSelect").innerHTML = '<option value="">-- Semua Fasiliti --</option>';
+      document.getElementById("searchSemak").value = "";
+      if (jaw === "__SEMUA__") {
+        muatSemuaJawatanData();
+      } else {
+        muatDataUntukJawatan(jaw);
+      }
+    }
+
+    // PATCH BUG UTAMA: fungsi ini HILANG sebelum ini, itu punca tab
+    // Kajian Keberkesanan senyap bila pilih jawatan terus di tab tersebut.
+    function onJawatanPenyeliaChange() {
+      let jaw = document.getElementById("jawatanSelectPenyelia").value;
+      document.getElementById("divFasilitiSelectPenyelia").style.display = "none";
+      document.getElementById("fasilitiSelectPenyelia").innerHTML = '<option value="">-- Semua Fasiliti --</option>';
+      document.getElementById("searchPenilaian").value = "";
+      muatDataUntukJawatan(jaw);
+    }
+
+    // PATCH: fungsi ini sebelum ini tersalah letak dalam Code.gs (server-side)
+    // yang mana ia guna document.getElementById — tak boleh jalan di server.
+    function onTahunChange() {
+      let jaw = document.getElementById("jawatanSelect").value;
+      if (jaw) renderStaffList();
+    }
+
+    function saringSemakan() {
+      let keyword = document.getElementById("searchSemak").value.toLowerCase();
+      let items = document.querySelectorAll("#staffContainer .accordion-item");
+      items.forEach(item => {
+        let txt = item.getAttribute("data-search").toLowerCase();
+        item.style.display = txt.includes(keyword) ? "block" : "none";
+      });
+    }
+
+function renderStaffList() {
+  var jawatan = document.getElementById("jawatanSelect").value;
+  var selFasiliti = document.getElementById("fasilitiSelect").value;
+  var selTahun = document.getElementById("tahunSelect").value;
+  var container = document.getElementById("staffContainer");
+  if (!jawatan) { container.innerHTML = ""; return; }
+
+  var listStaf = [];
+
+  if (jawatan === "__SEMUA__") {
+    Object.keys(globalData).forEach(function(jaw) {
+      var staffObjJaw = globalData[jaw];
+      Object.keys(staffObjJaw).forEach(function(ic) {
+        listStaf.push(Object.assign({}, staffObjJaw[ic], { jawatanAsal: jaw }));
+      });
+    });
+    if (listStaf.length === 0) { container.innerHTML = '<div class="alert alert-info">Tiada data untuk dipaparkan.</div>'; return; }
+  } else {
+    var staffObj = globalData[jawatan];
+    if (!staffObj) { container.innerHTML = '<div class="alert alert-info">Tiada data. Sila pilih jawatan.</div>'; return; }
+    Object.keys(staffObj).forEach(function(ic) {
+      listStaf.push(Object.assign({}, staffObj[ic], { jawatanAsal: jawatan }));
+    });
+  }
+
+  listStaf.sort(function(a, b) {
+    var cmpJaw = a.jawatanAsal.localeCompare(b.jawatanAsal);
+    if (cmpJaw !== 0) return cmpJaw;
+    var cmpFas = a.tempatBertugas.localeCompare(b.tempatBertugas);
+    return cmpFas !== 0 ? cmpFas : a.nama.localeCompare(b.nama);
+  });
+
+  var html = "";
+  var bilStaf = 1;
+
+  listStaf.forEach(function(td, index) {
+    var ic = td.ic;
+    if (selFasiliti && td.tempatBertugas !== selFasiliti) return;
+
+    var calculatedJam = 0, calculatedCPD = 0;
+    var coursesHtml = "", kumpKursus = "";
+
+    td.courses.forEach(function(k, cIdx) {
+      // Filter tahun dilakukan di client sebab server tak filter lagi (data penuh semua tahun)
+      if (k.tahun !== selTahun) return;
+
+      calculatedJam += parseFloat(k.jamKursus) || 0;
+      calculatedCPD += parseFloat(k.cpd) || 0;
+      kumpKursus += k.namaKursus + " ";
+
+      var linkSijil = (k.sijil && k.sijil.startsWith('http'))
+        ? '<a href="' + k.sijil + '" target="_blank" class="btn btn-sm btn-outline-primary">📄 Sijil</a>'
+        : '<span class="badge bg-danger">Tiada Sijil</span>';
+
+      var ikonHRMIS = (k.hrmis && k.hrmis.toString().trim().toLowerCase() === 'ya') ? '✅' : '❌';
+
+      var btnTahap1 = k.tahap1 
+        ? '<button class="btn btn-sm btn-outline-info mb-1" onclick="paparPenilaianTahap1(\'' + td.jawatanAsal + '\', \'' + ic + '\', ' + cIdx + ')">Borang Penilaian Kursus</button>'
+        : "-";
+      var btnTahap3 = (k.isKursusPenuh && k.statusKeb === "Selesai" && k.bahagianC)
+        ? '<button class="btn btn-sm btn-success" onclick="paparPenilaianPenyelia(\'' + td.jawatanAsal + '\', \'' + ic + '\', ' + cIdx + ')">Borang Keberkesanan Kursus</button>'
+        : "";
+
+      coursesHtml += '<tr data-hrmis-ref="' + k.row + '">' +
+        '<td class="text-start">' + k.namaKursus + '</td>' +
+        '<td>' + k.tarikhMula + '</td>' +
+        '<td>' + k.tarikhTamat + '</td>' +
+        '<td>' + k.jenisKursus + '</td>' +
+        '<td>' + k.kategoriKursus + '</td>' +
+        '<td>' + k.tempat + '</td>' +
+        '<td>' + k.anjuran + '</td>' +
+        '<td>' + k.jamKursus + '</td>' +
+        '<td>' + (k.cpd || "0") + '</td>' +
+        '<td class="hrmis-cell">' + ikonHRMIS + '</td>' +
+        '<td class="text-center">' + linkSijil + '</td>' +
+        '<td class="text-center">' + btnTahap1 + '<br>' + btnTahap3 + '</td>' +
+        '<td class="text-center" style="white-space: nowrap;">' +
+          '<button type="button" class="btn btn-outline-primary btn-sm me-1" data-rekod-action="hrmis" onclick="bukaStatusHRMIS(\'' + k.row + '\')">🔄 HRMIS</button>' +
+          '<button class="btn btn-outline-warning btn-sm me-1" data-rekod-action="edit" onclick="editRekodSah(\'' + k.row + '\')">✏️ Edit</button>' +
+          '<button class="btn btn-outline-danger btn-sm" data-rekod-action="padam" onclick="padamRekodSah(\'' + k.row + '\')">🗑️ Padam</button>' +
+        '</td></tr>';
+    });
+
+    var barColor = calculatedJam >= 40 ? "bg-success" : (calculatedJam >= 20 ? "bg-warning text-dark" : "bg-danger");
+    var percent = Math.min((calculatedJam / 40) * 100, 100);
+    var nama = td.nama;
+    var kataCarian = nama + " " + ic + " " + kumpKursus;
+
+    html += '<div class="accordion-item mb-2 shadow-sm" style="border-radius:10px;" data-search="' + kataCarian + '">' +
+      '<h2 class="accordion-header">' +
+      '<button class="accordion-button collapsed rounded" type="button" data-bs-toggle="collapse" data-bs-target="#col' + index + '">' +
+      '<div class="d-flex w-100 justify-content-between align-items-center me-3">' +
+      '<span><strong>' + bilStaf++ + '. ' + nama + '</strong><br><small class="text-muted">🏥 ' + td.tempatBertugas + ' | 💼 ' + td.jawatanAsal + '</small></span>' +
+      '<div class="d-flex flex-wrap gap-1 justify-content-end align-items-center"><span class="badge ' + barColor + ' fs-6">Portal: ' + calculatedJam + ' Jam</span><span class="badge bg-info text-dark fs-6">' + calculatedCPD + ' CPD</span>' + badgeJamHRMIS(td,selTahun) + '</div>' +
+      '</div></button></h2>' +
+      '<div id="col' + index + '" class="accordion-collapse collapse">' +
+      '<div class="accordion-body">' +
+      '<div class="progress mb-3"><div class="progress-bar ' + barColor + '" style="width: ' + percent + '%"></div></div>' +
+      '<div class="table-responsive"><table class="table table-bordered table-hover table-sm text-center align-middle" style="font-size:0.9rem">' +
+      '<thead class="table-light"><tr><th class="text-start">Nama Latihan</th><th>Tarikh Mula</th><th>Tarikh Tamat</th><th>Jenis</th><th>Kategori</th><th>Lokasi</th><th>Anjuran</th><th>Jam</th><th>CPD</th><th>HRMIS</th><th>Sijil</th><th>Penilaian</th><th>Tindakan</th></tr></thead>' +
+      '<tbody>' + (coursesHtml || '<tr><td colspan="13">Tiada rekod kursus pada tahun ini.</td></tr>') + '</tbody></table></div>' +
+      '</div></div></div>';
+  });
+
+  container.innerHTML = html || '<div class="alert alert-info">Tiada staf dijumpai untuk pilihan ini.</div>';
+}
+
+    function saringPenilaian() {
+      let keyword = document.getElementById("searchPenilaian").value.toLowerCase();
+      let items = document.querySelectorAll("#penilaianView .card-search");
+      items.forEach(item => {
+        let txt = item.getAttribute("data-search").toLowerCase();
+        item.style.display = txt.includes(keyword) ? "block" : "none";
+      });
+    }
+
+    function renderPenilaianList() {
+      var jawatan = document.getElementById("jawatanSelectPenyelia").value;
+      var selFasiliti = document.getElementById("fasilitiSelectPenyelia").value;
+      var containerTunggak = document.getElementById("penilaianContainerTertunggak");
+      var containerBelum = document.getElementById("penilaianContainerBelumMatang");
+      var containerSelesai = document.getElementById("penilaianContainerSelesai");
+      
+      if (!jawatan) { 
+        containerTunggak.innerHTML = ""; 
+        containerBelum.innerHTML = ""; 
+        containerSelesai.innerHTML = ""; 
+        return; 
+      }
+      
+      var staffObj = globalData[jawatan];
+      if (!staffObj) { 
+        containerTunggak.innerHTML = ""; 
+        containerBelum.innerHTML = ""; 
+        containerSelesai.innerHTML = ""; 
+        return; 
+      }
+      var icList = Object.keys(staffObj).sort((a, b) => staffObj[a].nama.localeCompare(staffObj[b].nama));
+      
+      var htmlTunggak = ""; var adaTunggak = false;
+      var htmlBelum = ""; var adaBelum = false;
+      var htmlSelesai = ""; var adaSelesai = false;
+      
+      icList.forEach((ic) => {
+        var td = staffObj[ic];
+        var nama = td.nama;
+        if(selFasiliti && td.tempatBertugas !== selFasiliti) return; 
+        
+        var pendingCoursesHtml = "";
+        var belumCoursesHtml = "";
+        var completedCoursesHtml = "";
+        var carianTunggak = nama + " " + ic + " ";
+        var carianBelum = nama + " " + ic + " ";
+        var carianSelesai = nama + " " + ic + " ";
+        
+        td.courses.forEach((k, cIdx) => {
+          if (!k.isKursusPenuh) return; // ABAIKAN CME DARI KAJIAN KEBERKESANAN
+
+          if (k.perluKeb && k.statusKeb !== "Selesai") {
+            adaTunggak = true;
+            carianTunggak += k.namaKursus + " ";
+            pendingCoursesHtml += `
+            <tr>
+              <td class="text-start"><strong>${k.namaKursus}</strong><br><small class="text-danger">Telah berlalu: ${k.hariBerlalu} Hari</small></td>
+              <td>${k.tarikhMula}</td>
+              <td>${k.tarikhTamat}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="bukaBorangPenyelia('${jawatan}', '${ic}', ${cIdx})">Isi Penilaian</button></td>
+            </tr>`;
+          } else if (!k.perluKeb && k.statusKeb !== "Selesai") {
+            adaBelum = true;
+            carianBelum += k.namaKursus + " ";
+            let bakiHari = 90 - k.hariBerlalu;
+            belumCoursesHtml += `
+            <tr>
+              <td class="text-start"><strong>${k.namaKursus}</strong><br><small class="text-secondary fw-bold">Baki: ${bakiHari} Hari lagi</small></td>
+              <td>${k.tarikhMula}</td>
+              <td>${k.tarikhTamat}</td>
+              <td><span class="badge bg-secondary">Belum Matang</span></td>
+            </tr>`;
+          } else if (k.statusKeb === "Selesai" && k.bahagianC) {
+            adaSelesai = true;
+            carianSelesai += k.namaKursus + " ";
+            completedCoursesHtml += `
+            <tr>
+              <td class="text-start"><strong>${k.namaKursus}</strong><br><small class="text-success">Dinilai Pada: ${k.bahagianC.tarikhBos}</small></td>
+              <td>${k.tarikhMula}</td>
+              <td>${k.tarikhTamat}</td>
+              <td><button class="btn btn-success btn-sm" onclick="paparPenilaianPenyelia('${jawatan}', '${ic}', ${cIdx})">Borang Keberkesanan Kursus</button></td>
+            </tr>`;
+          }
+        });
+        
+        if(pendingCoursesHtml !== "") {
+          htmlTunggak += `
+          <div class="card mb-3 shadow-sm border-danger card-search" data-search="${carianTunggak}">
+            <div class="card-header bg-white text-danger fw-bold">👤 ${nama}</div>
+            <div class="card-body p-0">
+              <div class="table-responsive"><table class="table table-hover mb-0 text-center align-middle"><thead class="table-light"><tr><th style="width:50%">Kursus</th><th style="width:15%">Tarikh Mula</th><th style="width:15%">Tarikh Tamat</th><th>Tindakan</th></tr></thead><tbody>${pendingCoursesHtml}</tbody></table></div>
+            </div>
+          </div>`;
+        }
+
+        if(belumCoursesHtml !== "") {
+          htmlBelum += `
+          <div class="card mb-3 shadow-sm border-secondary card-search" data-search="${carianBelum}">
+            <div class="card-header bg-white text-secondary fw-bold">👤 ${nama}</div>
+            <div class="card-body p-0">
+              <div class="table-responsive"><table class="table table-hover mb-0 text-center align-middle"><thead class="table-light"><tr><th style="width:50%">Kursus</th><th style="width:15%">Tarikh Mula</th><th style="width:15%">Tarikh Tamat</th><th>Tindakan</th></tr></thead><tbody>${belumCoursesHtml}</tbody></table></div>
+            </div>
+          </div>`;
+        }
+        
+        if(completedCoursesHtml !== "") {
+          htmlSelesai += `
+          <div class="card mb-3 shadow-sm border-success card-search" data-search="${carianSelesai}">
+            <div class="card-header bg-white text-success fw-bold">👤 ${nama}</div>
+            <div class="card-body p-0">
+              <div class="table-responsive"><table class="table table-hover mb-0 text-center align-middle"><thead class="table-light"><tr><th style="width:50%">Kursus</th><th style="width:15%">Tarikh Mula</th><th style="width:15%">Tarikh Tamat</th><th>Tindakan</th></tr></thead><tbody>${completedCoursesHtml}</tbody></table></div>
+            </div>
+          </div>`;
+        }
+      });
+      
+      containerTunggak.innerHTML = adaTunggak ? htmlTunggak : `<div class="alert alert-success text-center">🎉 Tiada penilaian tertunggak untuk carian ini.</div>`;
+      containerBelum.innerHTML = adaBelum ? htmlBelum : `<div class="alert alert-secondary text-center">Tiada kursus yang sedang menunggu tempoh matang bagi carian ini.</div>`;
+      containerSelesai.innerHTML = adaSelesai ? htmlSelesai : `<div class="alert alert-secondary text-center">Belum ada rekod yang telah dinilai bagi carian ini.</div>`;
+    }
+
+    function bukaBorangPenyelia(jawatan, ic, cIdx) {
+      let td = globalData[jawatan][ic];
+      let kursus = td.courses[cIdx];
+      let nama = td.nama;
+      document.getElementById('lblNamaPenyelia').innerText = "Pegawai Dinilai (PYD): " + nama;
+      document.getElementById('lblKursusPenyelia').innerText = "Kursus: " + kursus.namaKursus;
+      document.getElementById('penyeliaRowValue').value = kursus.row;
+      
+      document.querySelectorAll('input[name^="bDq_"]').forEach(r => r.checked = false);
+      document.getElementById('fNamaBos').value = "";
+      document.getElementById('fJawatanBos').value = "";
+      document.getElementById('fGredBos').value = "";
+      document.getElementById('fSkimBos').value = "";
+      document.getElementById('fTempohTahunBos').value = "";
+      document.getElementById('fTempohBulanBos').value = "";
+      document.getElementById('fUlasanPenyelia').value = "";
+      
+      new bootstrap.Modal(document.getElementById('modalBorangPenyelia')).show();
+    }
+
+    function submitPenilaianPenyelia(e) {
+      e.preventDefault();
+      let btn = document.getElementById('btnSubmitPenyelia');
+      btn.innerHTML = "Menyimpan... ⏳"; btn.disabled = true;
+
+      try {
+        let row = document.getElementById('penyeliaRowValue').value;
+        let skorArray = [];
+        
+        soalanBahagianD.forEach(grup => {
+           grup.soalan.forEach(q => {
+              let ans = document.querySelector(`input[name="bDq_${q.id}"]:checked`);
+              skorArray.push(ans ? ans.value : "");
+           });
+        });
+
+        let data = {
+          namaBos: document.getElementById('fNamaBos').value,
+          jawatanBos: document.getElementById('fJawatanBos').value,
+          gredBos: document.getElementById('fGredBos').value,
+          skimBos: document.getElementById('fSkimBos').value,
+          tempohTahun: document.getElementById('fTempohTahunBos').value,
+          tempohBulan: document.getElementById('fTempohBulanBos').value,
+          skor: skorArray,
+          ulasan: document.getElementById('fUlasanPenyelia').value
+        };
+
+        google.script.run
+          .withSuccessHandler(res => {
+            alert(res.message);
+            bootstrap.Modal.getInstance(document.getElementById('modalBorangPenyelia')).hide();
+            btn.innerHTML = "Hantar Penilaian"; btn.disabled = false;
+            if(res.success) muatDataDashboard();
+          })
+          .withFailureHandler(err => {
+            alert("Ralat Server: Sila cuba lagi. " + err.message);
+            btn.innerHTML = "Hantar Penilaian"; btn.disabled = false;
+          })
+          .simpanPenilaianPenyelia(row, JSON.stringify(data));
+      } catch (err) {
+        alert("Ralat Sistem: " + err.message);
+        btn.innerHTML = "Hantar Penilaian"; btn.disabled = false;
+      }
+    }
+
+    // ==========================================
+    // FUNGSI BARU: DASHBOARD PRESTASI LATIHAN DI LANDING PAGE
+    // Bar chart peratus + bilangan staf yang capai 40 jam latihan
+    // mengikut perjawatan, untuk tahun dashboard yang dipilih.
+    // ==========================================
+    var landingLoadId=0, tahunLandingLoading=false, tahunLoadId=0, batalGrafLanding=null;
+    function mesejRalatGraf(bahagian,message) {
+      const kategori=bahagian==='kategori';
+      const status=document.getElementById(kategori?'kategoriJamStatus':'dashboardLandingLoading');
+      status.style.display='block';status.className='alert alert-warning';status.textContent=message;
+      document.getElementById(kategori?'kategoriJamWrap':'dashboardLandingChartWrap').style.display='none';
+      if(kategori)document.getElementById('kategoriJamInfo').textContent='';
+    }
+    function ralatLanding(message) {mesejRalatGraf('jawatan',message);mesejRalatGraf('kategori',message);}
+    function panggilBacaanPortal(method,args,success,failure) {
+      let done=false;
+      const timer=setTimeout(function(){fail(new Error('Respons portal melebihi 30 saat. Klik Refresh untuk cuba semula.'));},30000);
+      function fail(err) {
+        if(done)return;done=true;clearTimeout(timer);
+        failure(err && err.message ? err.message : String(err));
+      }
+      try {
+        if(typeof google==='undefined' || !google.script || !google.script.run)throw new Error('Sambungan portal belum tersedia. Refresh halaman portal.');
+        const runner=google.script.run.withSuccessHandler(function(res) {
+          if(done)return;done=true;clearTimeout(timer);
+          try{success(res);}catch(err){failure('Ralat paparan: '+(err.message || String(err)));}
+        }).withFailureHandler(fail);
+        runner[method].apply(runner,args || []);
+      }catch(err){fail(err);}
+      return function(){done=true;clearTimeout(timer);};
+    }
+    function muatTahunLanding() {
+      if(tahunLandingLoading)return;
+      tahunLandingLoading=true;
+      const requestId=++tahunLoadId, sel=document.getElementById('tahunLandingSelect');
+      sel.disabled=true;
+      function fail(message) {
+        if(requestId!==tahunLoadId)return;
+        tahunLandingLoading=false;sel.disabled=false;
+        sel.innerHTML='<option value="">Klik Refresh untuk cuba semula</option>';
+        ralatLanding(message);
+      }
+      panggilBacaanPortal('getPortalTahun',[],function(res) {
+        if(requestId!==tahunLoadId)return;
+        if(!res || res.status!=='SUCCESS') {fail(res ? res.message : 'Tiada respons senarai tahun.');return;}
+        if(!Array.isArray(res.tahunList) || !res.tahunList.length){fail('Senarai tahun kosong. Semak tab latihan dan klik Refresh.');return;}
+        const list=res.tahunList.map(String), previous=sel.value;
+        sel.innerHTML='';
+        list.forEach(function(y){const opt=document.createElement('option');opt.value=y;opt.textContent=y;sel.appendChild(opt);});
+        sel.value=list.indexOf(previous)>=0 ? previous : String(res.tahunPilihan);
+        if(!sel.value)sel.selectedIndex=0;
+        tahunLandingLoading=false;sel.disabled=false;
+        muatDashboardLanding();
+      },fail);
+    }
+    function muatDashboardLanding() {
+      const tahun=document.getElementById('tahunLandingSelect').value;
+      if(!tahun){muatTahunLanding();return;}
+      const requestId=++landingLoadId;
+      if(batalGrafLanding)batalGrafLanding();
+      document.getElementById('tajukGrafJawatan').textContent='📈 Dashboard Prestasi Latihan Staf (Capai 40 Jam Latihan Tahun '+tahun+')';
+      document.getElementById('tajukGrafKategori').textContent='📊 Pecahan Jam Latihan Staf — '+tahun;
+      [['dashboardLandingLoading','dashboardLandingChartWrap','Memuatkan dashboard...'],['kategoriJamStatus','kategoriJamWrap','Memuatkan pecahan jam...']].forEach(function(ids) {
+        const status=document.getElementById(ids[0]);status.style.display='block';status.className='alert alert-info';status.textContent=ids[2];
+        document.getElementById(ids[1]).style.display='none';
+      });
+      document.getElementById('kategoriJamInfo').textContent='';
+      batalGrafLanding=panggilBacaanPortal('getPortalDashboard',[tahun],function(res) {
+        if(requestId!==landingLoadId)return;
+        if(!res || res.status!=='SUCCESS'){ralatLanding(res ? res.message : 'Tiada respons dashboard.');return;}
+        function renderSection(part,fn,key) {
+          try{
+            const data=res[key];
+            if(!data || data.status!=='SUCCESS')throw new Error(data ? data.message : 'Data graf tidak diterima.');
+            if(typeof Chart==='undefined' || typeof ChartDataLabels==='undefined')throw new Error('Pustaka graf gagal dimuatkan. Refresh halaman portal.');
+            fn(data);
+          }catch(err){mesejRalatGraf(part,err.message || String(err));}
+        }
+        renderSection('jawatan',function(data) {
+          if(!Array.isArray(data.chartData) || !data.chartData.length)throw new Error('Tiada data jawatan untuk dipaparkan.');
+          renderDashboardLandingChart(data.chartData);
+        },'jawatan');
+        renderSection('kategori',renderGrafKategoriJam,'kategori');
+      },function(message){if(requestId===landingLoadId)ralatLanding(message);});
+    }
+
+    function renderDashboardLandingChart(chartData) {
+      document.getElementById('dashboardLandingLoading').style.display = 'none';
+      var wrap = document.getElementById('dashboardLandingChartWrap');
+      wrap.style.display = 'block';
+      wrap.style.height = (chartData.length * 35 + 60) + 'px';
+
+      var labels = chartData.map(function(d) { return d.jawatan; });
+      var dataPeratus = chartData.map(function(d) { return d.peratus; });
+      var dataCapai = chartData.map(function(d) { return d.capai40; });
+      var dataJumlah = chartData.map(function(d) { return d.jumlahJawatan; });
+
+      var ctx = document.getElementById('chartLandingCapai40').getContext('2d');
+      if (chartLandingInstance) chartLandingInstance.destroy();
+
+      chartLandingInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Peratus Staf Capai 40 Jam (%)',
+            data: dataPeratus,
+            backgroundColor: '#0d6efd'
+          }]
+        },
+        plugins: [ChartDataLabels],
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { beginAtZero: true, max: 100, title: { display: true, text: 'Peratus (%)' } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  var i = ctx.dataIndex;
+                  return dataCapai[i] + ' / ' + dataJumlah[i] + ' staf (' + dataPeratus[i] + '%)';
+                }
+              }
+            },
+            datalabels: {
+              anchor: 'end',
+              align: 'end',
+              color: '#212529',
+              font: { weight: 'bold' },
+              formatter: function(value, ctx) {
+                var i = ctx.dataIndex;
+                return dataCapai[i] + '/' + dataJumlah[i] + ' (' + value + '%)';
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // FUNGSI BARU: EXPORT EXCEL (Semak Rekod Latihan)
+    // 1 baris = 1 kursus. Selepas senarai kursus setiap staf,
+    // ada 1 baris "JUMLAH JAM" untuk staf tersebut.
+    // Export ikut EXACTLY filter jawatan / fasiliti / tahun / carian semasa.
+    // ==========================================
+    function exportExcelSemakan() {
+      var jawatan = document.getElementById("jawatanSelect").value;
+      if (!jawatan) { alert("Sila pilih Jawatan dahulu sebelum export."); return; }
+
+      var selFasiliti = document.getElementById("fasilitiSelect").value;
+      var selTahun = document.getElementById("tahunSelect").value;
+      var keyword = document.getElementById("searchSemak").value.toLowerCase();
+
+      var staffObj = globalData[jawatan];
+      if (!staffObj) { alert("Tiada data untuk export."); return; }
+
+      var listStaf = Object.keys(staffObj).map(function(ic) {
+        return Object.assign({}, staffObj[ic], { ic: ic });
+      });
+      listStaf.sort(function(a, b) {
+        var cmp = a.tempatBertugas.localeCompare(b.tempatBertugas);
+        return cmp !== 0 ? cmp : a.nama.localeCompare(b.nama);
+      });
+
+      var rows = [];
+      var bil = 1;
+
+      listStaf.forEach(function(td) {
+        if (selFasiliti && td.tempatBertugas !== selFasiliti) return;
+
+        var kataCarian = (td.nama + " " + td.ic + " " + td.courses.map(function(k){return k.namaKursus;}).join(" ")).toLowerCase();
+        if (keyword && kataCarian.indexOf(keyword) === -1) return;
+
+        var kursusTahunIni = td.courses.filter(function(k) { return k.tahun === selTahun; });
+        if (kursusTahunIni.length === 0) return;
+
+        var jumlahJam = 0;
+
+        kursusTahunIni.forEach(function(k) {
+          jumlahJam += parseFloat(k.jamKursus) || 0;
+          rows.push({
+            "Bil": bil,
+            "Nama": td.nama,
+            "No. KP": td.ic,
+            "Tempat Bertugas": td.tempatBertugas,
+            "Nama Kursus": k.namaKursus,
+            "Tarikh Mula": k.tarikhMula,
+            "Tarikh Tamat": k.tarikhTamat,
+            "Jenis Kursus": k.jenisKursus,
+            "Kategori": k.kategoriKursus,
+            "Lokasi": k.tempat,
+            "Anjuran": k.anjuran,
+            "Jam Kursus": k.jamKursus,
+            "CPD": k.cpd,
+            "HRMIS": k.hrmis,
+            "Status Keberkesanan": k.statusKeb
+          });
+        });
+
+        // Baris jumlah jam untuk staf ini
+        rows.push({
+          "Bil": "",
+          "Nama": "",
+          "No. KP": "",
+          "Tempat Bertugas": "",
+          "Nama Kursus": "JUMLAH JAM (" + td.nama + ")",
+          "Tarikh Mula": "",
+          "Tarikh Tamat": "",
+          "Jenis Kursus": "",
+          "Kategori": "",
+          "Lokasi": "",
+          "Anjuran": "",
+          "Jam Kursus": jumlahJam,
+          "CPD": "",
+          "HRMIS": "",
+          "Status Keberkesanan": ""
+        });
+
+        bil++;
+      });
+
+      if (rows.length === 0) {
+        alert("Tiada data untuk di-export mengikut pilihan semasa (Jawatan/Fasiliti/Tahun/Carian).");
+        return;
+      }
+
+      var ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = [
+        {wch:5},{wch:25},{wch:15},{wch:30},{wch:35},{wch:12},{wch:12},
+        {wch:14},{wch:12},{wch:20},{wch:14},{wch:10},{wch:8},{wch:8},{wch:18}
+      ];
+
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Rekod Latihan");
+
+      var namaFail = "Rekod_Latihan_" + jawatan.replace(/[^a-zA-Z0-9]/g, "_") + "_" + selTahun + ".xlsx";
+      XLSX.writeFile(wb, namaFail);
+    }
+    var adminHRMISToken='',adminHRMISModal=null,adminHRMISPreviewId='',adminHRMISRecords=[],adminHRMISPage=0,adminHRMISBusy=false,adminHRMISConfirming=false;
+    function mesejAdminHRMIS(text,error){const el=document.getElementById('adminHRMISMessage');el.textContent=text;el.className='mt-3 small '+(error?'text-danger':'text-success');}
+    function panggilAdminHRMIS(method,args,success,failure){
+      let timeout=setTimeout(function(){mesejAdminHRMIS('Respons masih belum diterima. Jangan hantar berulang; tunggu pengesahan atau semak semula selepas sambungan pulih.',true);},60000);
+      function fail(err){clearTimeout(timeout);failure(err && err.message?err.message:String(err));}
+      try{const runner=google.script.run.withSuccessHandler(function(res){clearTimeout(timeout);try{success(res);}catch(e){failure('Ralat paparan: '+e.message);}}).withFailureHandler(fail);runner[method].apply(runner,args);}catch(e){fail(e);}
+    }
+    function bukaAdminHRMIS(){
+      if(typeof bootstrap==='undefined'){alert('Paparan belum dimuatkan. Refresh portal.');return;}
+      if(!adminHRMISModal)adminHRMISModal=new bootstrap.Modal(document.getElementById('modalAdminHRMIS'));
+      document.getElementById('adminHRMISLoginForm').style.display=adminHRMISToken?'none':'block';
+      document.getElementById('adminHRMISPanel').style.display=adminHRMISToken?'block':'none';
+      document.getElementById('adminHRMISPassword').value='';adminHRMISModal.show();
+    }
+    function loginAdminHRMIS(event){
+      event.preventDefault();if(adminHRMISBusy)return;
+      const input=document.getElementById('adminHRMISPassword'),password=input.value;input.value='';
+      adminHRMISBusy=true;document.getElementById('btnLoginAdminHRMIS').disabled=true;mesejAdminHRMIS('Menyemak akses admin...');
+      function done(){adminHRMISBusy=false;document.getElementById('btnLoginAdminHRMIS').disabled=false;}
+      panggilAdminHRMIS('adminHRMISLogin',[password],function(res){done();if(!res||!res.success){mesejAdminHRMIS(res?res.message:'Tiada pengesahan log masuk.',true);return;}adminHRMISToken=res.token;document.getElementById('adminHRMISLoginForm').style.display='none';document.getElementById('adminHRMISPanel').style.display='block';mesejAdminHRMIS(res.message);},function(m){done();mesejAdminHRMIS(m,true);});
+    }
+    function logoutAdminHRMIS(){
+      if(adminHRMISBusy){mesejAdminHRMIS('Tunggu proses semasa selesai sebelum log keluar.',true);return;}
+      const token=adminHRMISToken;adminHRMISToken='';batalPratontonHRMIS();adminHRMISRecords=[];document.getElementById('adminHRMISRows').innerHTML='';document.getElementById('adminHRMISFiles').value='';document.getElementById('adminHRMISLinks').value='';document.getElementById('adminHRMISPassword').value='';document.getElementById('adminHRMISLoginForm').style.display='block';document.getElementById('adminHRMISPanel').style.display='none';mesejAdminHRMIS('Sudah log keluar.');
+      if(token)google.script.run.withFailureHandler(function(){}).adminHRMISLogout(token);
+    }
+    function batalPratontonHRMIS(){adminHRMISPreviewId='';document.getElementById('adminHRMISPreview').style.display='none';document.getElementById('adminHRMISConfirmCheck').checked=false;document.getElementById('btnConfirmHRMIS').disabled=true;}
+    function semakButangConfirmHRMIS(){document.getElementById('btnConfirmHRMIS').disabled=!adminHRMISPreviewId||!document.getElementById('adminHRMISConfirmCheck').checked||adminHRMISBusy;}
+    async function bacaFailAdminHRMIS(files){
+      if(files.length>4)throw new Error('Pilih maksimum empat fail XLSX.');
+      if(files.length && typeof XLSX==='undefined')throw new Error('Pustaka Excel belum dimuatkan. Refresh portal.');
+      const books=[];let total=0;
+      for(const file of files){
+        total+=file.size;if(file.size>10*1024*1024||total>20*1024*1024)throw new Error('Had 10 MB setiap fail dan 20 MB keseluruhan.');
+        if(!/\.xlsx$/i.test(file.name))throw new Error('Gunakan fail .xlsx.');
+        const workbook=XLSX.read(await file.arrayBuffer(),{type:'array'});
+        for(const name of workbook.SheetNames){
+          const sheet=workbook.Sheets[name],range=sheet['!ref'];if(!range)continue;
+          const bounds=XLSX.utils.decode_range(range);if(bounds.e.r>15000||bounds.e.c>=100)throw new Error('Fail mempunyai terlalu banyak baris/lajur.');
+          books.push({sourceName:file.name,sheetName:name,rows:XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:false,blankrows:false})});
+        }
+      }return books;
+    }
+    async function semakImportHRMIS(){
+      if(adminHRMISBusy||!adminHRMISToken)return;batalPratontonHRMIS();adminHRMISBusy=true;document.getElementById('btnPreviewHRMIS').disabled=true;mesejAdminHRMIS('Membaca laporan dan menyediakan pratonton...');
+      function done(){adminHRMISBusy=false;document.getElementById('btnPreviewHRMIS').disabled=false;}
+      try{
+        const payload={year:Number(document.getElementById('adminHRMISYear').value),reportDate:document.getElementById('adminHRMISDate').value,books:await bacaFailAdminHRMIS(Array.from(document.getElementById('adminHRMISFiles').files)),links:document.getElementById('adminHRMISLinks').value.split(/\n/).map(s=>s.trim()).filter(Boolean)};
+        const submitted=JSON.stringify({year:payload.year,date:payload.reportDate,links:payload.links,files:Array.from(document.getElementById('adminHRMISFiles').files).map(f=>f.name+'|'+f.size+'|'+f.lastModified)});
+        panggilAdminHRMIS('adminHRMISPreview',[adminHRMISToken,JSON.stringify(payload)],function(res){
+          done();if(!res||!res.success){mesejAdminHRMIS(res?res.message:'Pratonton gagal.',true);return;}
+          const current=JSON.stringify({year:Number(document.getElementById('adminHRMISYear').value),date:document.getElementById('adminHRMISDate').value,links:document.getElementById('adminHRMISLinks').value.split(/\n/).map(s=>s.trim()).filter(Boolean),files:Array.from(document.getElementById('adminHRMISFiles').files).map(f=>f.name+'|'+f.size+'|'+f.lastModified)});
+          if(current!==submitted){mesejAdminHRMIS('Input berubah semasa semakan. Klik Semak import semula.',true);return;}
+          adminHRMISPreviewId=res.canConfirm?res.previewId:'';adminHRMISRecords=res.records;document.getElementById('adminHRMISYear').value=res.year;document.getElementById('adminHRMISDate').value=res.reportDate;
+          document.getElementById('adminHRMISPreview').style.display='block';
+          const c=res.counts;document.getElementById('adminHRMISSummary').textContent=res.count+' IC unik • '+res.duplicates+' pertindihan dibuang • '+c.baru+' baharu / '+c.kemasKini+' dikemas kini / '+c.sama+' sama • '+c.padan+' padan portal / '+c.tiadaPortal+' belum ada rekod portal. Kategori: '+res.buckets.join(' / ')+' (0, <20, <40, ≥40 jam).';
+          const issues=document.getElementById('adminHRMISIssues');issues.style.display=res.issues.length?'block':'none';issues.textContent=res.issues.join('\n');issues.style.whiteSpace='pre-line';
+          document.getElementById('adminHRMISSearch').value='';renderPratontonHRMIS(0);semakButangConfirmHRMIS();mesejAdminHRMIS(res.canConfirm?'Pratonton sedia. Semak dan tandakan pengesahan sebelum menyimpan.':'Ada isu dalam laporan. Tiada data disimpan; betulkan isu sebelum meneruskan.',!res.canConfirm);
+        },function(m){done();mesejAdminHRMIS(m,true);});
+      }catch(e){done();mesejAdminHRMIS(e.message,true);}
+    }
+    function teksJamHRMIS(minutes){if(minutes==null)return '—';const h=Math.floor(minutes/60),m=minutes%60;return h+' jam'+(m?' '+m+' minit':'');}
+    function renderPratontonHRMIS(page){
+      const query=document.getElementById('adminHRMISSearch').value.toLowerCase(),rows=adminHRMISRecords.filter(r=>(r.ic+' '+r.name+' '+r.unit+' '+r.job).toLowerCase().includes(query)),pages=Math.max(1,Math.ceil(rows.length/50));adminHRMISPage=Math.max(0,Math.min(pages-1,page));
+      document.getElementById('adminHRMISPageInfo').textContent=(adminHRMISPage+1)+' / '+pages;
+      document.getElementById('adminHRMISRows').innerHTML=rows.slice(adminHRMISPage*50,adminHRMISPage*50+50).map(r=>'<tr><td>'+escapeHtml(r.ic)+'</td><td>'+escapeHtml(r.name)+'</td><td>'+escapeHtml(r.unit)+'<br><small>'+escapeHtml(r.job)+'</small></td><td>'+teksJamHRMIS(r.oldMinutes)+'</td><td>'+teksJamHRMIS(r.minutes)+'</td><td>'+ (r.matched?'Padan IC':'Tiada rekod portal')+'</td><td>'+escapeHtml(r.change)+'</td></tr>').join('');
+    }
+    function sahkanImportHRMIS(){
+      if(adminHRMISBusy||!adminHRMISPreviewId||!document.getElementById('adminHRMISConfirmCheck').checked)return;
+      adminHRMISBusy=true;adminHRMISConfirming=true;semakButangConfirmHRMIS();document.getElementById('btnPreviewHRMIS').disabled=true;mesejAdminHRMIS('Menyimpan import yang telah disahkan...');
+      function done(){adminHRMISBusy=false;adminHRMISConfirming=false;document.getElementById('btnPreviewHRMIS').disabled=false;semakButangConfirmHRMIS();}
+      panggilAdminHRMIS('adminHRMISConfirm',[adminHRMISToken,adminHRMISPreviewId],function(res){done();if(!res||!res.success){batalPratontonHRMIS();mesejAdminHRMIS(res?res.message:'Tiada pengesahan simpanan. Semak HRMIS_JAM sebelum mencuba semula.',true);return;}batalPratontonHRMIS();globalData={};document.getElementById('staffContainer').innerHTML='';mesejAdminHRMIS(res.message+' Buka Semak Rekod Latihan atau Refresh Data untuk melihat badge HRMIS.');},function(m){done();mesejAdminHRMIS(m+' Semak HRMIS_JAM sebelum mencuba semula.',true);});
+    }
+    function badgeJamHRMIS(staff,year){
+      const item=staff.hrmisByYear&&staff.hrmisByYear[String(year)];if(!item)return '<span class="badge bg-secondary fs-6">HRMIS: Belum tersedia</span>';
+      const color=item.minutes>=2400?'bg-success':item.minutes>=1200?'bg-warning text-dark':'bg-danger';
+      return '<span class="badge '+color+' fs-6">HRMIS: '+teksJamHRMIS(item.minutes)+'</span><small class="text-muted text-end w-100">Laporan '+escapeHtml(item.reportDate)+'</small>';
+    }
+
+    function selepasSimpanLDP(res,data,isEdit){
+      if(!res || !res.success){alert(res?res.message:'Tiada pengesahan simpanan. Semak rekod sebelum menghantar semula.');return;}
+      simpanProfilSelepasHantar();document.getElementById('formLDP').reset();document.getElementById('fEditRow').value='';
+      if(isEdit){alert(res.message);showView('menuView');muatDashboardLanding();return;}
+      document.getElementById('selesaiNama').textContent=data.nama;
+      [['selesaiKursus',data.kursus],['selesaiPenganjur',data.anjuran],['selesaiTempat',data.tempat],['selesaiJam',data.jam]].forEach(function(pair){document.getElementById(pair[0]).value=pair[1] || '';});
+      function tarikh(s){const p=String(s).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:s;}
+      document.getElementById('selesaiTarikh').textContent=tarikh(data.tarikhMula)+' → '+tarikh(data.tarikhTamat);
+      document.getElementById('selesaiSalinStatus').textContent='';
+      const sijil=document.getElementById('selesaiSijil'),url=String(res.sijilUrl || '');
+      sijil.style.display=/^https:\/\/drive\.google\.com\//.test(url)?'inline-block':'none';sijil.href=/^https:\/\/drive\.google\.com\//.test(url)?url:'#';
+      showView('selesaiView');muatDashboardLanding();
+    }
+    async function salinSelepasSimpan(id){
+      const input=document.getElementById(id),status=document.getElementById('selesaiSalinStatus');let copied=false;
+      try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(input.value);copied=true;}}catch(e){}
+      if(!copied){input.focus();input.select();try{copied=!!document.execCommand('copy');}catch(e){}}
+      status.textContent=copied?'Maklumat berjaya disalin. Paste ke ruangan HRMIS yang sepadan.':'Salin automatik disekat. Maklumat telah dipilih; tekan Ctrl+C atau Command+C.';
+    }
+
+    var mulaPortalSudah=false;
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mulaPortal,{once:true});
+    else mulaPortal();
+  </script>
+</body>
+</html>
