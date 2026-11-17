@@ -16,8 +16,27 @@
     .active-view { display: flex; } 
     #stafView.active-view, #bosView.active-view, #penilaianView.active-view, #selesaiView.active-view { display: block; }
     #adminHRMISButton { position:fixed;right:18px;bottom:18px;z-index:1030;box-shadow:0 3px 12px #0002; }
-    #kategoriJamWrap { height:340px; max-width:900px; width:100%; margin:0 auto; }
-    @media (max-width:767.98px) { #kategoriJamWrap { height:440px; } }
+    .dashboard-sumber-tabs { display:flex;gap:4px;padding:5px;background:#fff;border:1px solid #dee2e6;border-radius:10px;width:max-content;max-width:100%; }
+    .dashboard-sumber-tabs button { min-height:42px; }
+    .dashboard-graf-grid { display:grid;grid-template-columns:minmax(0,1fr);gap:24px; }
+    .dashboard-graf-panel { min-width:0; }
+    .dashboard-sumber-label { font-size:14px;font-weight:600;margin-bottom:8px; }
+    .dashboard-jawatan-row { margin-bottom:16px; }
+    .dashboard-jawatan-label { display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:5px; }
+    .dashboard-jawatan-nama { min-width:0;overflow-wrap:anywhere; }
+    .dashboard-jawatan-angka { flex-shrink:0;font-variant-numeric:tabular-nums; }
+    .dashboard-jawatan-track { height:12px;background:#edf2f7;border-radius:6px;overflow:hidden; }
+    .dashboard-jawatan-bar { height:100%;background:#0d6efd;border-radius:6px; }
+    .dashboard-jawatan-skala { display:flex;justify-content:space-between;color:#6c757d;font-size:11px; }
+    .kategori-jam-layout { display:flex;align-items:center;justify-content:center;gap:22px;max-width:900px;margin:0 auto;width:100%; }
+    .kategori-jam-kanvas { width:220px;height:220px;flex:0 0 220px;position:relative; }
+    .kategori-jam-legend { list-style:none;margin:0;padding:0;min-width:0;max-width:270px; }
+    .kategori-jam-legend li { display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;font-size:12px; }
+    .kategori-jam-dot { width:9px;height:9px;flex:0 0 9px;border-radius:50%;margin-top:5px; }
+    .kategori-jam-nilai { display:block;font-variant-numeric:tabular-nums; }
+    @media(min-width:992px) { .dashboard-banding { grid-template-columns:repeat(2,minmax(0,1fr)); }.dashboard-banding .kategori-jam-kanvas { width:170px;height:170px;flex-basis:170px; }.dashboard-banding .kategori-jam-layout { gap:14px; } }
+    @media(max-width:575.98px) { .dashboard-graf-card { padding:16px!important; }.dashboard-graf-card>div:first-child { flex-wrap:wrap;gap:10px; }.dashboard-sumber-tabs { width:100%; }.dashboard-sumber-tabs button { flex:1; }.kategori-jam-kanvas { width:130px;height:150px;flex-basis:130px; }.kategori-jam-layout { gap:12px; }.kategori-jam-legend li { font-size:11px;gap:6px; }.dashboard-jawatan-label { font-size:12px; } }
+    @media(max-width:359.98px) { .kategori-jam-kanvas { width:105px;height:140px;flex-basis:105px; }.kategori-jam-layout { gap:8px; } }
   </style>
 </head>
 <body>
@@ -37,24 +56,53 @@
         <select id="tahunLandingSelect" class="form-select form-select-sm" style="max-width:140px" onchange="muatDashboardLanding()" aria-label="Tahun dashboard"><option value="">Memuatkan...</option></select>
       </div>
       <div class="col-12">
-        <div class="card p-4 shadow-sm" style="border-radius:15px;">
+        <div class="dashboard-sumber-tabs" role="group" aria-label="Sumber data dashboard">
+          <button id="tabSumberPortal" type="button" class="btn btn-primary btn-sm" aria-pressed="true" onclick="pilihSumberDashboard('portal')">Portal</button>
+          <button id="tabSumberHRMIS" type="button" class="btn btn-sm" aria-pressed="false" onclick="pilihSumberDashboard('hrmis')">HRMIS</button>
+          <button id="tabSumberBanding" type="button" class="btn btn-sm" aria-pressed="false" onclick="pilihSumberDashboard('banding')">Banding</button>
+        </div>
+        <div id="dashboardSkopSumber" class="alert alert-warning small mt-3 mb-0" role="status" style="display:none"></div>
+      </div>
+      <div class="col-12">
+        <div class="card p-4 shadow-sm dashboard-graf-card" style="border-radius:15px;">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 id="tajukGrafJawatan" class="text-primary mb-0">📈 Dashboard Prestasi Latihan Staf</h5>
             <button class="btn btn-sm btn-outline-primary" onclick="muatDashboardLanding()">🔄 Refresh</button>
           </div>
-          <div id="dashboardLandingLoading" class="alert alert-info">Memuatkan dashboard...</div>
-          <div id="dashboardLandingChartWrap" style="display:none;">
-            <canvas id="chartLandingCapai40"></canvas>
+          <div id="dashboardGrafJawatanGrid" class="dashboard-graf-grid">
+            <div class="dashboard-graf-panel">
+              <div id="dashboardJawatanSumber" class="dashboard-sumber-label">Portal</div>
+              <p id="jawatanGrafInfo" class="small text-secondary"></p>
+              <div id="dashboardLandingLoading" class="alert alert-info" role="status">Memuatkan dashboard...</div>
+              <div id="dashboardLandingChartWrap" style="display:none;"><div id="chartLandingCapai40"></div></div>
+            </div>
+            <div id="dashboardHRMISJawatanPanel" class="dashboard-graf-panel" style="display:none">
+              <div class="dashboard-sumber-label">HRMIS</div>
+              <p id="jawatanHRMISGrafInfo" class="small text-secondary"></p>
+              <div id="dashboardHRMISJawatanStatus" class="alert alert-info" role="status"></div>
+              <div id="dashboardHRMISJawatanWrap" style="display:none;"><div id="chartHRMISCapai40"></div></div>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="col-12">
-        <div class="card p-4 shadow-sm" style="border-radius:15px;">
+        <div class="card p-4 shadow-sm dashboard-graf-card" style="border-radius:15px;">
           <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-2"><h5 id="tajukGrafKategori" class="text-primary mb-0">📊 Pecahan Jam Latihan Staf</h5><button type="button" class="btn btn-sm btn-outline-primary" onclick="muatGrafKategoriJam()">🔄 Refresh</button></div>
-          <p id="kategoriJamInfo" class="small text-secondary" role="status">Memuatkan jumlah staf...</p>
-          <div id="kategoriJamStatus" class="alert alert-info" role="status">Memuatkan pecahan jam...</div>
-          <div id="kategoriJamWrap" style="display:none"><canvas id="chartKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan" role="img"></canvas></div>
+          <div id="dashboardGrafKategoriGrid" class="dashboard-graf-grid">
+            <div class="dashboard-graf-panel">
+              <div id="dashboardKategoriSumber" class="dashboard-sumber-label">Portal</div>
+              <p id="kategoriJamInfo" class="small text-secondary" role="status">Memuatkan jumlah staf...</p>
+              <div id="kategoriJamStatus" class="alert alert-info" role="status">Memuatkan pecahan jam...</div>
+              <div id="kategoriJamWrap" class="kategori-jam-layout" style="display:none"><div class="kategori-jam-kanvas"><canvas id="chartKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan" role="img"></canvas></div><ul id="kategoriJamLegend" class="kategori-jam-legend"></ul></div>
+            </div>
+            <div id="dashboardHRMISKategoriPanel" class="dashboard-graf-panel" style="display:none">
+              <div class="dashboard-sumber-label">HRMIS</div>
+              <p id="kategoriHRMISJamInfo" class="small text-secondary" role="status"></p>
+              <div id="kategoriHRMISJamStatus" class="alert alert-info" role="status"></div>
+              <div id="kategoriHRMISJamWrap" class="kategori-jam-layout" style="display:none"><div class="kategori-jam-kanvas"><canvas id="chartHRMISKategoriJam" aria-label="Bilangan staf mengikut kategori jam latihan HRMIS" role="img"></canvas></div><ul id="kategoriHRMISJamLegend" class="kategori-jam-legend"></ul></div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="col-md-4 mt-4">
@@ -548,7 +596,7 @@
   </div>
 
   <script>
-    let kategoriJamChart=null;
+    let kategoriJamChart=null,kategoriJamHRMISChart=null;
     const PROFIL_KEY='pkdks.latihan.profil.v2';
     const medanProfil=['fNama','fIC','fUmur','fJantina','fJawatan','fGred','fFasiliti','fTempohAwam','fTempohJawatan'];
     function escapeHtml(value) {
@@ -609,62 +657,56 @@
       const data=bacaProfil(); data.autoFill=false; tulisProfil(data);
     }
     function muatGrafKategoriJam() { muatDashboardLanding(); }
-    function renderGrafKategoriJam(res) {
+    function renderGrafKategoriJam(res,tambahanHRMIS) {
       if(!res || !Array.isArray(res.kategori))throw new Error('Respons pecahan jam tidak sah.');
-      const status=document.getElementById('kategoriJamStatus');
+      const ids=tambahanHRMIS?['kategoriHRMISJamStatus','kategoriHRMISJamWrap','kategoriHRMISJamInfo','chartHRMISKategoriJam','kategoriHRMISJamLegend']:['kategoriJamStatus','kategoriJamWrap','kategoriJamInfo','chartKategoriJam','kategoriJamLegend'];
+      const status=document.getElementById(ids[0]);
         if(res.warnings && res.warnings.length) { status.style.display='block'; status.className='alert alert-warning'; status.textContent=res.warnings.join(' '); } else status.style.display='none';
-        document.getElementById('kategoriJamWrap').style.display='block';
+        document.getElementById(ids[1]).style.display='flex';
         const rows=res.kategori;
-        if(kategoriJamChart)kategoriJamChart.destroy();
+        if(tambahanHRMIS){if(kategoriJamHRMISChart)kategoriJamHRMISChart.destroy();kategoriJamHRMISChart=null;}
+        else {if(kategoriJamChart)kategoriJamChart.destroy();kategoriJamChart=null;}
         const jumlahStaf=res.jumlahStaf || rows.reduce((sum,r)=>sum+r.bilangan,0);
-        document.getElementById('kategoriJamInfo').textContent='Jumlah organisasi: '+jumlahStaf+' staf • IC unik • Berdasarkan Tarikh Mula';
-        const warnaKategori=['#64748b','#f59e0b','#3b82f6','#10b981'];
+        document.getElementById(ids[2]).textContent=res.sumber==='HRMIS'?infoLaporanGrafHRMIS(res,false):'Jumlah organisasi: '+jumlahStaf+' staf • IC unik • Berdasarkan Tarikh Mula';
+        const warnaKategori=['#64748b','#f59e0b','#3b82f6','#10b981','#8b5cf6'];
+        document.getElementById(ids[4]).innerHTML=rows.map((r,i)=>'<li><span class="kategori-jam-dot" style="background:'+warnaKategori[i%warnaKategori.length]+'"></span><span>'+escapeHtml(r.label)+'<span class="kategori-jam-nilai">'+r.bilangan+' staf ('+Number(r.peratus).toFixed(1)+'%)</span></span></li>').join('');
         const jumlahTengah={
           id:'jumlahStafTengah',
           afterDraw(chart) {
             const arc=chart.getDatasetMeta(0).data[0];
             if(!arc || !arc.innerRadius)return;
-            const ctx=chart.ctx, size=Math.max(22,Math.min(38,arc.innerRadius*.6));
+            const ctx=chart.ctx, size=Math.max(14,Math.min(38,arc.innerRadius*.6));
             ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle';
             ctx.fillStyle='#0f172a'; ctx.font='700 '+size+'px "Segoe UI", sans-serif';
             ctx.fillText(String(jumlahStaf),arc.x,arc.y-10);
-            ctx.fillStyle='#64748b'; ctx.font='13px "Segoe UI", sans-serif';
+            ctx.fillStyle='#64748b'; ctx.font='11px "Segoe UI", sans-serif';
             ctx.fillText('Jumlah staf',arc.x,arc.y+size*.65);
             ctx.restore();
           }
         };
-        kategoriJamChart=new Chart(document.getElementById('chartKategoriJam'),{
+        const instance=new Chart(document.getElementById(ids[3]),{
           type:'doughnut',
           data:{labels:rows.map(r=>r.label),datasets:[{
             label:'Bilangan staf', data:rows.map(r=>r.bilangan),
-            backgroundColor:warnaKategori, borderColor:'#ffffff', borderWidth:4,
-            borderRadius:5, hoverOffset:8
+            backgroundColor:warnaKategori, borderColor:'#ffffff', borderWidth:2,
+            borderRadius:3, hoverOffset:4
           }]},
           plugins:[ChartDataLabels,jumlahTengah],
           options:{
             responsive:true, maintainAspectRatio:false, cutout:'62%',
-            onResize(chart,size) {
-              chart.options.plugins.legend.position=size.width<640?'bottom':'right';
-            },
-            layout:{padding:18},
+            layout:{padding:4},
             plugins:{
-              legend:{position:window.innerWidth<768?'bottom':'right',align:'center',labels:{
-                usePointStyle:true, pointStyle:'circle', padding:18, color:'#334155', font:{size:12},
-                generateLabels(chart){return rows.map((r,i)=>({
-                  text:r.label+' — '+r.bilangan+' staf ('+r.peratus.toFixed(1)+'%)',
-                  fillStyle:warnaKategori[i],strokeStyle:warnaKategori[i],lineWidth:0,
-                  pointStyle:'circle',hidden:!chart.getDataVisibility(i),index:i
-                }));}
-              }},
+              legend:{display:false},
               tooltip:{callbacks:{label:ctx=>rows[ctx.dataIndex].bilangan+' staf ('+rows[ctx.dataIndex].peratus.toFixed(1)+'%)'}},
               datalabels:{
                 color:'#ffffff', textAlign:'center', font:{weight:'bold',size:12},
-                display:ctx=>rows[ctx.dataIndex].peratus>=5,
+                display:ctx=>ctx.chart.width>=200 && rows[ctx.dataIndex].peratus>=8,
                 formatter:(v,ctx)=>v+' staf\n'+rows[ctx.dataIndex].peratus.toFixed(1)+'%'
               }
             }
           }
         });
+        if(tambahanHRMIS)kategoriJamHRMISChart=instance;else kategoriJamChart=instance;
     }
 
     let jenisLatihanAktif = '';
@@ -1628,15 +1670,20 @@ function renderStaffList() {
     // Bar chart peratus + bilangan staf yang capai 40 jam latihan
     // mengikut perjawatan, untuk tahun dashboard yang dipilih.
     // ==========================================
-    var landingLoadId=0, tahunLandingLoading=false, tahunLoadId=0, batalGrafLanding=null;
-    function mesejRalatGraf(bahagian,message) {
-      const kategori=bahagian==='kategori';
-      const status=document.getElementById(kategori?'kategoriJamStatus':'dashboardLandingLoading');
-      status.style.display='block';status.className='alert alert-warning';status.textContent=message;
-      document.getElementById(kategori?'kategoriJamWrap':'dashboardLandingChartWrap').style.display='none';
-      if(kategori)document.getElementById('kategoriJamInfo').textContent='';
+    var landingLoadId=0,tahunLandingLoading=false,tahunLoadId=0,batalGrafLanding=null;
+    var sumberDashboardAktif='portal',dashboardSumberData=null;
+    function idGrafLanding(bahagian,tambahanHRMIS) {
+      if(bahagian==='kategori')return tambahanHRMIS?['kategoriHRMISJamStatus','kategoriHRMISJamWrap','kategoriHRMISJamInfo']:['kategoriJamStatus','kategoriJamWrap','kategoriJamInfo'];
+      return tambahanHRMIS?['dashboardHRMISJawatanStatus','dashboardHRMISJawatanWrap','jawatanHRMISGrafInfo']:['dashboardLandingLoading','dashboardLandingChartWrap','jawatanGrafInfo'];
     }
-    function ralatLanding(message) {mesejRalatGraf('jawatan',message);mesejRalatGraf('kategori',message);}
+    function mesejRalatGraf(bahagian,message,tambahanHRMIS) {
+      const ids=idGrafLanding(bahagian,tambahanHRMIS),status=document.getElementById(ids[0]);
+      status.style.display='block';status.className='alert alert-warning';status.textContent=message;
+      document.getElementById(ids[1]).style.display='none';document.getElementById(ids[2]).textContent='';
+    }
+    function ralatLanding(message) {
+      ['jawatan','kategori'].forEach(function(part){mesejRalatGraf(part,message);mesejRalatGraf(part,message,true);});
+    }
     function panggilBacaanPortal(method,args,success,failure) {
       let done=false;
       const timer=setTimeout(function(){fail(new Error('Respons portal melebihi 30 saat. Klik Refresh untuk cuba semula.'));},30000);
@@ -1657,113 +1704,101 @@ function renderStaffList() {
     function muatTahunLanding() {
       if(tahunLandingLoading)return;
       tahunLandingLoading=true;
-      const requestId=++tahunLoadId, sel=document.getElementById('tahunLandingSelect');
-      sel.disabled=true;
+      const requestId=++tahunLoadId,sel=document.getElementById('tahunLandingSelect');sel.disabled=true;
       function fail(message) {
         if(requestId!==tahunLoadId)return;
-        tahunLandingLoading=false;sel.disabled=false;
-        sel.innerHTML='<option value="">Klik Refresh untuk cuba semula</option>';
-        ralatLanding(message);
+        tahunLandingLoading=false;sel.disabled=false;sel.innerHTML='<option value="">Klik Refresh untuk cuba semula</option>';ralatLanding(message);
       }
       panggilBacaanPortal('getPortalTahun',[],function(res) {
         if(requestId!==tahunLoadId)return;
-        if(!res || res.status!=='SUCCESS') {fail(res ? res.message : 'Tiada respons senarai tahun.');return;}
-        if(!Array.isArray(res.tahunList) || !res.tahunList.length){fail('Senarai tahun kosong. Semak tab latihan dan klik Refresh.');return;}
-        const list=res.tahunList.map(String), previous=sel.value;
-        sel.innerHTML='';
+        if(!res || res.status!=='SUCCESS'){fail(res?res.message:'Tiada respons senarai tahun.');return;}
+        if(!Array.isArray(res.tahunList)||!res.tahunList.length){fail('Senarai tahun kosong. Semak tab latihan dan klik Refresh.');return;}
+        const list=res.tahunList.map(String),previous=sel.value;sel.innerHTML='';
         list.forEach(function(y){const opt=document.createElement('option');opt.value=y;opt.textContent=y;sel.appendChild(opt);});
-        sel.value=list.indexOf(previous)>=0 ? previous : String(res.tahunPilihan);
-        if(!sel.value)sel.selectedIndex=0;
-        tahunLandingLoading=false;sel.disabled=false;
-        muatDashboardLanding();
+        sel.value=list.indexOf(previous)>=0?previous:String(res.tahunPilihan);if(!sel.value)sel.selectedIndex=0;
+        tahunLandingLoading=false;sel.disabled=false;muatDashboardLanding();
       },fail);
+    }
+    function kemasPaparanTabSumber() {
+      [['portal','tabSumberPortal'],['hrmis','tabSumberHRMIS'],['banding','tabSumberBanding']].forEach(function(pair){
+        const btn=document.getElementById(pair[1]),active=pair[0]===sumberDashboardAktif;
+        btn.className='btn btn-sm'+(active?' btn-primary':'');btn.setAttribute('aria-pressed',String(active));
+      });
+      const banding=sumberDashboardAktif==='banding';
+      ['dashboardGrafJawatanGrid','dashboardGrafKategoriGrid'].forEach(function(id){document.getElementById(id).classList.toggle('dashboard-banding',banding);});
+      ['dashboardHRMISJawatanPanel','dashboardHRMISKategoriPanel'].forEach(function(id){document.getElementById(id).style.display=banding?'block':'none';});
+      ['dashboardJawatanSumber','dashboardKategoriSumber'].forEach(function(id){document.getElementById(id).textContent=sumberDashboardAktif==='hrmis'?'HRMIS':'Portal';});
+      if(!banding&&kategoriJamHRMISChart){kategoriJamHRMISChart.destroy();kategoriJamHRMISChart=null;}
+    }
+    function pilihSumberDashboard(sumber) {
+      if(['portal','hrmis','banding'].indexOf(sumber)<0)return;
+      sumberDashboardAktif=sumber;kemasPaparanTabSumber();
+      if(dashboardSumberData&&dashboardSumberData.tahun===document.getElementById('tahunLandingSelect').value)renderDashboardSumber();
+      else muatDashboardLanding();
     }
     function muatDashboardLanding() {
       const tahun=document.getElementById('tahunLandingSelect').value;
       if(!tahun){muatTahunLanding();return;}
-      const requestId=++landingLoadId;
-      if(batalGrafLanding)batalGrafLanding();
+      const requestId=++landingLoadId;dashboardSumberData=null;
+      if(batalGrafLanding)batalGrafLanding();kemasPaparanTabSumber();
       document.getElementById('tajukGrafJawatan').textContent='📈 Dashboard Prestasi Latihan Staf (Capai 40 Jam Latihan Tahun '+tahun+')';
       document.getElementById('tajukGrafKategori').textContent='📊 Pecahan Jam Latihan Staf — '+tahun;
-      [['dashboardLandingLoading','dashboardLandingChartWrap','Memuatkan dashboard...'],['kategoriJamStatus','kategoriJamWrap','Memuatkan pecahan jam...']].forEach(function(ids) {
-        const status=document.getElementById(ids[0]);status.style.display='block';status.className='alert alert-info';status.textContent=ids[2];
-        document.getElementById(ids[1]).style.display='none';
-      });
-      document.getElementById('kategoriJamInfo').textContent='';
+      document.getElementById('dashboardSkopSumber').style.display='none';
+      [false,true].forEach(function(extra){['jawatan','kategori'].forEach(function(part){
+        const ids=idGrafLanding(part,extra),status=document.getElementById(ids[0]);
+        status.style.display='block';status.className='alert alert-info';status.textContent=part==='kategori'?'Memuatkan pecahan jam...':'Memuatkan dashboard...';
+        document.getElementById(ids[1]).style.display='none';document.getElementById(ids[2]).textContent='';
+      });});
       batalGrafLanding=panggilBacaanPortal('getPortalDashboard',[tahun],function(res) {
         if(requestId!==landingLoadId)return;
-        if(!res || res.status!=='SUCCESS'){ralatLanding(res ? res.message : 'Tiada respons dashboard.');return;}
-        function renderSection(part,fn,key) {
-          try{
-            const data=res[key];
-            if(!data || data.status!=='SUCCESS')throw new Error(data ? data.message : 'Data graf tidak diterima.');
-            if(typeof Chart==='undefined' || typeof ChartDataLabels==='undefined')throw new Error('Pustaka graf gagal dimuatkan. Refresh halaman portal.');
-            fn(data);
-          }catch(err){mesejRalatGraf(part,err.message || String(err));}
-        }
-        renderSection('jawatan',function(data) {
-          if(!Array.isArray(data.chartData) || !data.chartData.length)throw new Error('Tiada data jawatan untuk dipaparkan.');
-          renderDashboardLandingChart(data.chartData);
-        },'jawatan');
-        renderSection('kategori',renderGrafKategoriJam,'kategori');
+        if(!res||res.status!=='SUCCESS'){ralatLanding(res?res.message:'Tiada respons dashboard.');return;}
+        dashboardSumberData=res;renderDashboardSumber();
       },function(message){if(requestId===landingLoadId)ralatLanding(message);});
     }
-
-    function renderDashboardLandingChart(chartData) {
-      document.getElementById('dashboardLandingLoading').style.display = 'none';
-      var wrap = document.getElementById('dashboardLandingChartWrap');
-      wrap.style.display = 'block';
-      wrap.style.height = (chartData.length * 35 + 60) + 'px';
-
-      var labels = chartData.map(function(d) { return d.jawatan; });
-      var dataPeratus = chartData.map(function(d) { return d.peratus; });
-      var dataCapai = chartData.map(function(d) { return d.capai40; });
-      var dataJumlah = chartData.map(function(d) { return d.jumlahJawatan; });
-
-      var ctx = document.getElementById('chartLandingCapai40').getContext('2d');
-      if (chartLandingInstance) chartLandingInstance.destroy();
-
-      chartLandingInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Peratus Staf Capai 40 Jam (%)',
-            data: dataPeratus,
-            backgroundColor: '#0d6efd'
-          }]
-        },
-        plugins: [ChartDataLabels],
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { beginAtZero: true, max: 100, title: { display: true, text: 'Peratus (%)' } }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: function(ctx) {
-                  var i = ctx.dataIndex;
-                  return dataCapai[i] + ' / ' + dataJumlah[i] + ' staf (' + dataPeratus[i] + '%)';
-                }
-              }
-            },
-            datalabels: {
-              anchor: 'end',
-              align: 'end',
-              color: '#212529',
-              font: { weight: 'bold' },
-              formatter: function(value, ctx) {
-                var i = ctx.dataIndex;
-                return dataCapai[i] + '/' + dataJumlah[i] + ' (' + value + '%)';
-              }
-            }
+    function tarikhGrafHRMIS(value) {
+      const s=String(value||'');return /^\d{4}-\d{2}-\d{2}$/.test(s)?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):s;
+    }
+    function infoLaporanGrafHRMIS(res,jawatan) {
+      const dates=res.bilTarikh>1?tarikhGrafHRMIS(res.tarikhAwal)+' – '+tarikhGrafHRMIS(res.tarikhAkhir):tarikhGrafHRMIS(res.tarikhAkhir);
+      return 'Jumlah laporan: '+res.jumlahStaf+' staf • IC unik • Laporan '+dates+(jawatan?' • Jawatan dan pembahagi mengikut laporan HRMIS.':' • 0 Jam hanya staf yang dilaporkan 0 jam; staf tanpa laporan tidak dimasukkan.');
+    }
+    function renderDashboardSumber() {
+      if(!dashboardSumberData)return;kemasPaparanTabSumber();
+      const res=dashboardSumberData,primary=sumberDashboardAktif==='hrmis'?res.hrmis:res;
+      function renderSection(data,part,extra) {
+        try {
+          if(!data||data.status!=='SUCCESS')throw new Error(data?data.message:'Kod Code.gs belum menyokong graf HRMIS. Ganti kedua-dua fail dan deploy New version.');
+          if(part==='kategori')renderGrafKategoriJam(data,extra);
+          else {
+            if(!Array.isArray(data.chartData)||!data.chartData.length)throw new Error('Tiada data jawatan untuk dipaparkan.');
+            renderDashboardLandingChart(data.chartData,extra);
+            const ids=idGrafLanding(part,extra);
+            document.getElementById(ids[2]).textContent=data.sumber==='HRMIS'?infoLaporanGrafHRMIS(data,true):'Bilangan staf capai 40 jam berbanding bilangan perjawatan.';
+            const warnings=data.warnings||[],status=document.getElementById(ids[0]);
+            status.style.display=warnings.length?'block':'none';status.className='alert alert-warning';status.textContent=warnings.join(' ');
           }
+        } catch(err) {mesejRalatGraf(part,err.message||String(err),extra);}
+      }
+      ['jawatan','kategori'].forEach(function(part){renderSection(primary&&primary[part],part,false);});
+      if(sumberDashboardAktif==='banding')['jawatan','kategori'].forEach(function(part){renderSection(res.hrmis&&res.hrmis[part],part,true);});
+      const note=document.getElementById('dashboardSkopSumber'),p=res.kategori,h=res.hrmis&&res.hrmis.kategori;
+      note.style.display='none';
+      if(sumberDashboardAktif!=='portal'&&h&&h.status==='SUCCESS') {
+        const mismatch=p&&p.status==='SUCCESS'&&p.jumlahStaf!==h.jumlahStaf;
+        if(mismatch||sumberDashboardAktif==='banding'){
+          note.style.display='block';note.textContent=(mismatch?'Skop staf berbeza: Portal '+p.jumlahStaf+' staf; HRMIS '+h.jumlahStaf+' staf. ':'')+'Peratus menggunakan jumlah staf sumber masing-masing. Jawatan HRMIS mengikut label laporan; semak skop dan padanan jawatan sebelum membandingkan.';
         }
-      });
+      }
+    }
+    function renderDashboardLandingChart(chartData,tambahanHRMIS) {
+      const ids=idGrafLanding('jawatan',tambahanHRMIS);document.getElementById(ids[0]).style.display='none';
+      const wrap=document.getElementById(ids[1]);wrap.style.display='block';wrap.style.height='auto';
+      // Label penuh di atas bar mengelakkan nama jawatan terpotong pada telefon.
+      const chart=document.getElementById(tambahanHRMIS?'chartHRMISCapai40':'chartLandingCapai40');
+      chart.innerHTML=chartData.map(function(d){
+        const value=Number(d.peratus),bounded=Math.max(0,Math.min(100,value));
+        return '<div class="dashboard-jawatan-row"><div class="dashboard-jawatan-label"><span class="dashboard-jawatan-nama">'+escapeHtml(d.jawatan)+'</span><span class="dashboard-jawatan-angka">'+Number(d.capai40)+'/'+Number(d.jumlahJawatan)+' ('+value+'%)</span></div><div class="dashboard-jawatan-track" role="meter" aria-label="'+escapeHtml(d.jawatan)+' — '+Number(d.capai40)+' daripada '+Number(d.jumlahJawatan)+' staf capai 40 jam" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+bounded+'"><div class="dashboard-jawatan-bar" style="width:'+bounded+'%"></div></div></div>';
+      }).join('')+'<div class="dashboard-jawatan-skala" aria-hidden="true"><span>0%</span><span>50%</span><span>100%</span></div><div class="small text-secondary text-center mt-1">Peratus (%)</div>';
     }
 
     // ==========================================
@@ -1936,7 +1971,7 @@ function renderStaffList() {
       if(adminHRMISBusy||!adminHRMISPreviewId||!document.getElementById('adminHRMISConfirmCheck').checked)return;
       adminHRMISBusy=true;adminHRMISConfirming=true;semakButangConfirmHRMIS();document.getElementById('btnPreviewHRMIS').disabled=true;mesejAdminHRMIS('Menyimpan import yang telah disahkan...');
       function done(){adminHRMISBusy=false;adminHRMISConfirming=false;document.getElementById('btnPreviewHRMIS').disabled=false;semakButangConfirmHRMIS();}
-      panggilAdminHRMIS('adminHRMISConfirm',[adminHRMISToken,adminHRMISPreviewId],function(res){done();if(!res||!res.success){batalPratontonHRMIS();mesejAdminHRMIS(res?res.message:'Tiada pengesahan simpanan. Semak HRMIS_JAM sebelum mencuba semula.',true);return;}batalPratontonHRMIS();globalData={};document.getElementById('staffContainer').innerHTML='';mesejAdminHRMIS(res.message+' Buka Semak Rekod Latihan atau Refresh Data untuk melihat badge HRMIS.');},function(m){done();mesejAdminHRMIS(m+' Semak HRMIS_JAM sebelum mencuba semula.',true);});
+      panggilAdminHRMIS('adminHRMISConfirm',[adminHRMISToken,adminHRMISPreviewId],function(res){done();if(!res||!res.success){batalPratontonHRMIS();mesejAdminHRMIS(res?res.message:'Tiada pengesahan simpanan. Semak HRMIS_JAM sebelum mencuba semula.',true);return;}batalPratontonHRMIS();globalData={};document.getElementById('staffContainer').innerHTML='';dashboardSumberData=null;muatTahunLanding();mesejAdminHRMIS(res.message+' Buka Semak Rekod Latihan atau Refresh Data untuk melihat badge HRMIS.');},function(m){done();mesejAdminHRMIS(m+' Semak HRMIS_JAM sebelum mencuba semula.',true);});
     }
     function badgeJamHRMIS(staff,year){
       const item=staff.hrmisByYear&&staff.hrmisByYear[String(year)];if(!item)return '<span class="badge bg-secondary fs-6">HRMIS: Belum tersedia</span>';
@@ -1970,3 +2005,4 @@ function renderStaffList() {
   </script>
 </body>
 </html>
+

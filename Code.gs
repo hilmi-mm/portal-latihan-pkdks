@@ -1151,6 +1151,10 @@ function getPortalTahun() {
         var year=yearPortal_(row[0]); if(year)years[String(year)]=true;
       });
     });
+    // Laporan HRMIS boleh mempunyai tahun yang belum ada rekod latihan portal.
+    try { Object.keys(bacaJadualHRMIS_().map).forEach(function(key){
+      var y=Number(key.split('|')[0]);if(y>=2000&&y<=2099)years[String(y)]=true;
+    }); } catch(e) { /* Ralat HRMIS dipaparkan dalam tab HRMIS, bukan menyekat Portal. */ }
     var list=Object.keys(years).sort(function(a,b){return b-a;});
     var now=Utilities.formatDate(new Date(),'Asia/Kuala_Lumpur','yyyy');
     var preferred=list.indexOf(now)>=0 ? now : String(PORTAL_V2.year);
@@ -1219,9 +1223,60 @@ function getDashboardChartLanding(tahun) {
 }
 function getPortalDashboard(tahun) {
   try {
-    var year=tahunGrafLatihan_(tahun), data=dataGrafLatihan_(year);
-    return {status:'SUCCESS',tahun:String(year),jawatan:grafJawatanLatihan_(year,data),kategori:grafKategoriLatihan_(year,data)};
+    var year=tahunGrafLatihan_(tahun),portal;
+    try {
+      var data=dataGrafLatihan_(year);
+      portal={jawatan:grafJawatanLatihan_(year,data),kategori:grafKategoriLatihan_(year,data)};
+    } catch(e) {
+      portal={jawatan:{status:'ERROR',message:e.message},kategori:{status:'ERROR',message:e.message}};
+    }
+    // Kekalkan kunci jawatan/kategori untuk pemanggil versi terdahulu.
+    return {status:'SUCCESS',tahun:String(year),jawatan:portal.jawatan,kategori:portal.kategori,hrmis:grafDashboardHRMIS_(year)};
   }catch(e){return {status:'ERROR',message:e.message};}
+}
+
+// Baca sahaja. Satu baris HRMIS_JAM sudah merupakan jumlah terkumpul bagi IC/tahun.
+// Pembahagi HRMIS ialah staf yang diimport, berasingan daripada PORTAL_V2.staff.
+function grafDashboardHRMIS_(year) {
+  try {
+    var table=bacaJadualHRMIS_(),records=[],dates={},groups=Object.create(null);
+    Object.keys(table.map).forEach(function(key){
+      var row=table.map[key].values;if(Number(row[0])!==year)return;
+      var date=isoTarikhHRMIS_(row[9]);
+      if(Number(date.slice(0,4))!==year)throw new Error('Tarikh laporan HRMIS tidak sepadan dengan tahun '+year+'. Semak HRMIS_JAM.');
+      var minutes=Number(row[5]);
+      if(!Number.isSafeInteger(minutes)||minutes<0)throw new Error('Jumlah minit HRMIS tidak sah. Semak HRMIS_JAM.');
+      var job=teksHRMIS_(row[3]) || 'TIADA JAWATAN',jobKey=job.toUpperCase();
+      if(!groups[jobKey])groups[jobKey]={jawatan:job,capai40:0,jumlahJawatan:0};
+      groups[jobKey].jumlahJawatan++;
+      if(minutes>=2400)groups[jobKey].capai40++;
+      dates[date]=true;records.push(minutes);
+    });
+    if(!records.length){
+      var empty={status:'EMPTY',message:'Tiada laporan HRMIS tahun '+year+' yang telah disahkan. Import dan sahkan laporan melalui ⚙️ Admin dahulu.'};
+      return {jawatan:empty,kategori:empty};
+    }
+    var list=Object.keys(dates).sort(),warnings=[],counts=[0,0,0,0],belowOne=0;
+    if(list.length>1)warnings.push('Data digabung daripada laporan bertarikh berbeza. Tarikh paling awal '+list[0]+'; paling baharu '+list[list.length-1]+'.');
+    records.forEach(function(minutes){
+      if(minutes===0)counts[0]++;
+      else if(minutes<60)belowOne++;
+      else if(minutes<1200)counts[1]++;
+      else if(minutes<2400)counts[2]++;
+      else counts[3]++;
+    });
+    var labels=['0 Jam','1 - 19 Jam','20 - 39 Jam','40 Jam Ke Atas'];
+    if(belowOne){counts.push(belowOne);labels.push('Kurang 1 Jam');warnings.push(belowOne+' staf mempunyai jumlah lebih 0 tetapi kurang 1 jam; dipaparkan berasingan.');}
+    var count=records.length,meta={sumber:'HRMIS',tahun:String(year),jumlahStaf:count,tarikhAwal:list[0],tarikhAkhir:list[list.length-1],bilTarikh:list.length};
+    var category=Object.assign({},meta,{status:'SUCCESS',warnings:warnings,kategori:labels.map(function(label,i){return {label:label,bilangan:counts[i],peratus:Math.round(counts[i]/count*1000)/10};})});
+    var chart=Object.keys(groups).sort().map(function(key){
+      var g=groups[key];g.peratus=Math.round(g.capai40/g.jumlahJawatan*1000)/10;return g;
+    });
+    var jobs=Object.assign({},meta,{status:'SUCCESS',warnings:warnings,chartData:chart});
+    return {jawatan:jobs,kategori:category};
+  } catch(e) {
+    var error={status:'ERROR',message:e.message};return {jawatan:error,kategori:error};
+  }
 }
 
 // HRMIS: akses import hanya melalui sesi admin yang disahkan di server.
@@ -1409,3 +1464,4 @@ function sertakanJamHRMIS_(data){
     });
   });});
 }
+
